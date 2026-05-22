@@ -29,8 +29,7 @@ from torch_np_classifier import (
 # Config — adjust these to match your data
 # ---------------------------------------------------------------------------
 TRAIN_CSV     = "merged_dataset.csv"
-SMILES_COL    = "SMILES"
-LABEL_SLICE   = slice(1, None)   # all columns after SMILES are labels
+SMILES_COL     = "SMILES"
 NUM_CATEGORIES = 730
 BATCH_SIZE    = 128
 MAX_EPOCHS    = 150
@@ -43,9 +42,9 @@ CKPT_PATH     = "np_classifier.ckpt"
 print("Loading data …")
 df = pd.read_csv(TRAIN_CSV)
 
-smiles_list  = df[SMILES_COL].tolist()
-label_cols   = df.columns[LABEL_SLICE].tolist()
-labels       = df[label_cols].values.astype(np.float32)
+smiles_list = df[SMILES_COL].tolist()
+label_cols  = df.select_dtypes(include=[np.number]).columns.tolist()
+labels      = df[label_cols].values.astype(np.float32)
 
 print(f"  molecules : {len(smiles_list)}")
 print(f"  categories: {labels.shape[1]}")
