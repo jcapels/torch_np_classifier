@@ -23,7 +23,7 @@ from typing import List, Optional
 import numpy as np
 from joblib import Parallel, delayed
 from rdkit import Chem
-from rdkit.Chem import rdMolDescriptors
+from rdkit.Chem import rdFingerprintGenerator
 
 
 def featurize_smiles(
@@ -64,17 +64,29 @@ def featurize_smiles(
 
     mol_bi: dict = {}
     for r in range(radius + 1):
-        mol_fp = rdMolDescriptors.GetMorganFingerprintAsBitVect(
-            mol,
+        gen = rdFingerprintGenerator.GetMorganGenerator(
             radius=r,
-            bitInfo=mol_bi,
-            nBits=2048,
-            useChirality=use_chirality,
+            fpSize=2048,
+            includeChirality=use_chirality,
         )
+        ao = rdFingerprintGenerator.AdditionalOutput()
+        ao.AllocateBitInfoMap()
+        mol_fp = gen.GetFingerprint(mol, additionalOutput=ao)
+
+        # Merge this radius's bitInfoMap into the shared accumulator
+        for bit, infos in ao.GetBitInfoMap().items():
+            if bit not in mol_bi:
+                mol_bi[bit] = list(infos)
+            else:
+                existing = set(mol_bi[bit])
+                for info in infos:
+                    if info not in existing:
+                        mol_bi[bit].append(info)
+
         # Collect bits whose *shortest* contributing environment equals r
         active_bits_at_r: List[int] = []
         for bit in mol_fp.GetOnBits():
-            for atom_idx, env_radius in mol_bi[bit]:
+            for _atom_idx, env_radius in mol_bi[bit]:
                 if env_radius == r:
                     active_bits_at_r.append(bit)
                     break
