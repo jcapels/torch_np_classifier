@@ -28,12 +28,12 @@ from torch_np_classifier import (
 # ---------------------------------------------------------------------------
 # Config — adjust these to match your data
 # ---------------------------------------------------------------------------
-TRAIN_CSV     = "train_dataset.csv"
+TRAIN_CSV     = "merged_dataset.csv"
 SMILES_COL    = "SMILES"
 LABEL_SLICE   = slice(1, None)   # all columns after SMILES are labels
 NUM_CATEGORIES = 730
 BATCH_SIZE    = 128
-MAX_EPOCHS    = 50
+MAX_EPOCHS    = 150
 LR            = 1e-5
 CKPT_PATH     = "np_classifier.ckpt"
 
