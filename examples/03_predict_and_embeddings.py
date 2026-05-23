@@ -51,7 +51,7 @@ loader  = DataLoader(dataset, batch_size=32, shuffle=False)
 model = NPClassifierLightning.load_from_checkpoint(args.ckpt)
 
 collector = EmbeddingCollector()
-trainer   = lightning.Trainer(callbacks=[collector])
+trainer   = lightning.Trainer(callbacks=[collector], devices=1)
 trainer.predict(model, loader)
 
 predictions: np.ndarray = collector.predictions   # (N, num_categories)

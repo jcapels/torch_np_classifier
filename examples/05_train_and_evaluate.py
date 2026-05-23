@@ -28,14 +28,14 @@ from torch_np_classifier import (
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
-TRAIN_CSV  = "examples/train_dataset.csv"
-VAL_CSV    = "examples/validation_dataset.csv"
-TEST_CSV   = "examples/test_dataset.csv"
+TRAIN_CSV  = "train_dataset.csv"
+VAL_CSV    = "validation_dataset.csv"
+TEST_CSV   = "test_dataset.csv"
 SMILES_COL = "SMILES"
 LABEL_SLICE = slice(2, None)   # skip 'key' and 'SMILES'
 
 BATCH_SIZE  = 128
-MAX_EPOCHS  = 50
+MAX_EPOCHS  = 150
 LR          = 1e-5
 CKPT_DIR    = "checkpoints/"
 THRESHOLD   = 0.5
@@ -88,6 +88,7 @@ trainer = lightning.Trainer(
     max_epochs=MAX_EPOCHS,
     callbacks=callbacks,
     log_every_n_steps=10,
+    devices=1,
 )
 
 trainer.fit(model, datamodule=dm)
@@ -116,7 +117,7 @@ test_loader = DataLoader(
     num_workers=4,
 )
 
-pred_trainer = lightning.Trainer(enable_progress_bar=False)
+pred_trainer = lightning.Trainer(enable_progress_bar=False, devices=1)
 raw_outputs  = pred_trainer.predict(best_model, test_loader)
 probs        = torch.cat(raw_outputs, dim=0).numpy()
 preds        = (probs >= THRESHOLD).astype(np.int32)

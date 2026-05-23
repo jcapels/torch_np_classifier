@@ -32,7 +32,7 @@ TRAIN_CSV     = "merged_dataset.csv"
 SMILES_COL     = "SMILES"
 NUM_CATEGORIES = 730
 BATCH_SIZE    = 128
-MAX_EPOCHS    = 150
+MAX_EPOCHS    = 50
 LR            = 1e-5
 CKPT_PATH     = "np_classifier.ckpt"
 
@@ -74,6 +74,7 @@ trainer = lightning.Trainer(
     max_epochs=MAX_EPOCHS,
     log_every_n_steps=10,
     enable_progress_bar=True,
+    devices=1,
 )
 trainer.fit(model, train_loader)   # no val_loader → no validation loop
 
