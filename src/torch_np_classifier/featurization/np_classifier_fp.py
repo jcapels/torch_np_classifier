@@ -178,6 +178,63 @@ def _environment_atoms_and_bonds(
     return list(atoms), env_bonds
 
 
+def draw_bit_fragment(
+    mol: Chem.Mol,
+    bit_info: BitInfoMap,
+    fp_index: int,
+    radius: int = 2,
+    size: Tuple[int, int] = (150, 150),
+    as_svg: bool = False,
+) -> Optional[Union[str, "PIL.Image.Image"]]:  # noqa: F821
+    """Draw the Morgan environment for *fp_index* as an isolated fragment image.
+
+    Uses :func:`~rdkit.Chem.Draw.DrawMorganEnv` to render only the relevant
+    substructure (centre atom + its environment up to the bit radius).
+
+    Parameters
+    ----------
+    mol:
+        RDKit molecule.
+    bit_info:
+        Bit-info map from :func:`featurize_smiles` or
+        :meth:`NPClassifierFeaturizer.get_bit_info`.
+    fp_index:
+        Flat fingerprint vector index (0 ≤ fp_index < feature_dim).
+    radius:
+        Morgan radius used when the fingerprint was generated.
+    size:
+        ``(width, height)`` in pixels.
+    as_svg:
+        Return an SVG string instead of a PIL Image.
+
+    Returns
+    -------
+    PIL Image, SVG string, or ``None`` if *fp_index* is not active for this molecule.
+    """
+    import io
+    from rdkit.Chem.Draw import DrawMorganEnv
+
+    env_radius, morgan_bit = fp_index_to_radius_bit(fp_index, radius)
+    if morgan_bit not in bit_info:
+        return None
+    atom_idx = next(
+        (a for a, r in bit_info[morgan_bit] if r == env_radius),
+        None,
+    )
+    if atom_idx is None:
+        return None
+
+    result = DrawMorganEnv(mol, atom_idx, env_radius, molSize=size, useSVG=as_svg)
+    if as_svg:
+        return result  # SVG string
+    # DrawMorganEnv returns raw PNG bytes when useSVG=False
+    try:
+        from PIL import Image as _PIL_Image
+        return _PIL_Image.open(io.BytesIO(result))
+    except ImportError:
+        return result  # fall back to raw bytes
+
+
 class NPClassifierFeaturizer:
     """Batch featurizer that converts a list of SMILES to a float32 matrix.
 
@@ -401,3 +458,36 @@ class NPClassifierFeaturizer:
                 highlightAtoms=highlight_atoms,
                 highlightAtomColors=atom_colors,
             )
+
+    def draw_bit_fragment(
+        self,
+        smiles: str,
+        fp_index: int,
+        size: Tuple[int, int] = (150, 150),
+        as_svg: bool = False,
+    ) -> Optional[Union[str, "PIL.Image.Image"]]:  # noqa: F821
+        """Draw the Morgan environment fragment for a single fingerprint vector index.
+
+        Delegates to :func:`draw_bit_fragment` (module-level).
+
+        Parameters
+        ----------
+        smiles:
+            Input SMILES string.
+        fp_index:
+            Flat fingerprint vector index.
+        size:
+            ``(width, height)`` in pixels.
+        as_svg:
+            Return SVG string instead of PIL Image.
+
+        Returns
+        -------
+        PIL Image, SVG string, or ``None`` if the bit is not active or the
+        SMILES cannot be parsed.
+        """
+        mol = Chem.MolFromSmiles(smiles)
+        if mol is None:
+            return None
+        bit_info = self.get_bit_info(smiles)
+        return draw_bit_fragment(mol, bit_info, fp_index, self.radius, size, as_svg)

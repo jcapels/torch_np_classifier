@@ -5,7 +5,7 @@ setup(
     version="0.1.0",
     package_dir={"": "src"},
     packages=find_packages(where="src"),
-    package_data={"torch_np_classifier": ["data/label_names.pkl"]},
+    package_data={"torch_np_classifier": ["data/label_names.pkl", "data/index_v1.json"]},
     python_requires=">=3.9",
     install_requires=[
         "torch>=2.0.0",
