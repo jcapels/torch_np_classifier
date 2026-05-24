@@ -13,6 +13,7 @@ setup(
         "scikit-learn>=1.3.0",
         "pandas>=2.0.0",
         "numpy>=1.24.0",
+        "rdkit>=2022.3.1",
         "tqdm>=4.65.0",
         "joblib>=1.3.0",
     ],
