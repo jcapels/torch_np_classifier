@@ -1,6 +1,7 @@
 from torch_np_classifier.models.np_classifier import NPClassifierDNN
 from torch_np_classifier.models.lightning_module import NPClassifierLightning
 from torch_np_classifier.models.ensemble import NPClassifierEnsemble
+from torch_np_classifier.models.pipeline import NPClassifierPipeline
 from torch_np_classifier.featurization.np_classifier_fp import (
     NPClassifierFeaturizer,
     featurize_smiles,
@@ -15,10 +16,16 @@ from torch_np_classifier.explainability.shap_explainer import NPClassifierSHAP
 from torch_np_classifier.explainability.ensemble_shap import NPClassifierEnsembleSHAP
 
 __all__ = [
-    "NPClassifierDNN", "NPClassifierLightning", "NPClassifierEnsemble",
-    "NPClassifierFeaturizer", "featurize_smiles", "fp_index_to_radius_bit",
+    "NPClassifierDNN",
+    "NPClassifierLightning",
+    "NPClassifierEnsemble",
+    "NPClassifierPipeline",
+    "NPClassifierFeaturizer",
+    "featurize_smiles",
+    "fp_index_to_radius_bit",
     "draw_bit_fragment",
-    "NPClassifierDataset", "NPClassifierDataModule",
+    "NPClassifierDataset",
+    "NPClassifierDataModule",
     "EmbeddingCollector",
     "decode_predictions",
     "NPClassifierSHAP",

@@ -73,7 +73,9 @@ class NPClassifierDataModule(lightning.LightningDataModule):
         self.label_slice = label_slice
         self.batch_size = batch_size
         self.num_workers = num_workers
-        self.featurizer = featurizer if featurizer is not None else NPClassifierFeaturizer()
+        self.featurizer = (
+            featurizer if featurizer is not None else NPClassifierFeaturizer()
+        )
 
         self._train_dataset: Optional[NPClassifierDataset] = None
         self._val_dataset: Optional[NPClassifierDataset] = None

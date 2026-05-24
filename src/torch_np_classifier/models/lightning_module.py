@@ -5,7 +5,7 @@ No plants-sm or deepmol dependencies.
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, Tuple, Union
 
 import lightning
 import torch

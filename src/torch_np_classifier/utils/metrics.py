@@ -27,18 +27,19 @@ def cosine_similarity_mean_sd(y_true, y_pred):
     """
     y_true = np.asarray(y_true, dtype=float)
     y_pred = np.asarray(y_pred, dtype=float)
-    scores = np.array([
-        float(_cosine_similarity(t.reshape(1, -1), p.reshape(1, -1))[0, 0])
-        if np.any(t) and np.any(p) else 0.0
-        for t, p in zip(y_true, y_pred)
-    ])
+    scores = np.array(
+        [
+            float(_cosine_similarity(t.reshape(1, -1), p.reshape(1, -1))[0, 0])
+            if np.any(t) and np.any(p)
+            else 0.0
+            for t, p in zip(y_true, y_pred)
+        ]
+    )
     return float(scores.mean()), float(scores.std())
 
 
 def cosine_similarity_mean_sd_by_group(y_true, y_pred, group_indexes):
-    return cosine_similarity_mean_sd(
-        y_true[:, group_indexes], y_pred[:, group_indexes]
-    )
+    return cosine_similarity_mean_sd(y_true[:, group_indexes], y_pred[:, group_indexes])
 
 
 def map_mean_sd(y_true, y_pred):

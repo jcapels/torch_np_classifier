@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import lightning
 import numpy as np
@@ -76,9 +76,7 @@ class EmbeddingCollector(lightning.Callback):
             been called, or the first batch has not finished).
         """
         if not self._embeddings:
-            raise RuntimeError(
-                "No embeddings collected. Run trainer.predict() first."
-            )
+            raise RuntimeError("No embeddings collected. Run trainer.predict() first.")
         return np.concatenate(self._embeddings, axis=0)
 
     @property
@@ -91,7 +89,5 @@ class EmbeddingCollector(lightning.Callback):
             If no predictions have been collected yet.
         """
         if not self._predictions:
-            raise RuntimeError(
-                "No predictions collected. Run trainer.predict() first."
-            )
+            raise RuntimeError("No predictions collected. Run trainer.predict() first.")
         return np.concatenate(self._predictions, axis=0)

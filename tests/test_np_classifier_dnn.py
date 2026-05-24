@@ -69,7 +69,6 @@ class TestNPClassifierDNNOriginal:
 class TestNPClassifierDNNTraining:
     def test_gradients_flow(self, input_tensor):
         model = NPClassifierDNN(num_categories=730, original=False)
-        optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
         target = torch.randint(0, 2, (input_tensor.shape[0], 730)).float()
 
         out = model([input_tensor])

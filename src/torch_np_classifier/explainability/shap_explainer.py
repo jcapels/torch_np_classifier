@@ -22,7 +22,7 @@ Example
 
 from __future__ import annotations
 
-from typing import List, Optional, Sequence, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -305,8 +305,13 @@ class NPClassifierSHAP:
         if n == 0:
             fig, ax = plt.subplots(figsize=(4, 2))
             ax.text(
-                0.5, 0.5, "No active bits found",
-                ha="center", va="center", transform=ax.transAxes, fontsize=11,
+                0.5,
+                0.5,
+                "No active bits found",
+                ha="center",
+                va="center",
+                transform=ax.transAxes,
+                fontsize=11,
             )
             ax.axis("off")
             return fig
@@ -425,18 +430,25 @@ class NPClassifierSHAP:
         fig.suptitle(title, fontsize=13, fontweight="bold")
 
         gs = gridspec.GridSpec(
-            2, 2,
+            2,
+            2,
             height_ratios=[3, frag_rows * 1.6],
-            hspace=0.5, wspace=0.3,
+            hspace=0.5,
+            wspace=0.3,
             top=0.92,
         )
 
         # --- Full molecule (top-left) ---
         ax_mol = fig.add_subplot(gs[0, 0])
         mol_img = self.draw_explanation(
-            smiles, shap_values_1d, featurizer,
-            k=k, positive_only=positive_only,
-            size=mol_size, as_svg=False, per_feature_colors=True,
+            smiles,
+            shap_values_1d,
+            featurizer,
+            k=k,
+            positive_only=positive_only,
+            size=mol_size,
+            as_svg=False,
+            per_feature_colors=True,
         )
         ax_mol.imshow(np.array(mol_img))
         ax_mol.axis("off")
@@ -461,17 +473,23 @@ class NPClassifierSHAP:
             ax_bar.tick_params(axis="both", labelsize=7)
         else:
             ax_bar.text(
-                0.5, 0.5, "No active bits",
-                ha="center", va="center", transform=ax_bar.transAxes,
+                0.5,
+                0.5,
+                "No active bits",
+                ha="center",
+                va="center",
+                transform=ax_bar.transAxes,
             )
             ax_bar.axis("off")
 
         # --- Fragment grid (bottom, spanning both columns) ---
         if fragments:
             gs_frags = gridspec.GridSpecFromSubplotSpec(
-                frag_rows, frag_cols,
+                frag_rows,
+                frag_cols,
                 subplot_spec=gs[1, :],
-                hspace=0.6, wspace=0.1,
+                hspace=0.6,
+                wspace=0.1,
             )
             for i, frag in enumerate(fragments):
                 row, col = divmod(i, frag_cols)
@@ -479,8 +497,7 @@ class NPClassifierSHAP:
                 ax_f.imshow(np.array(frag["img"]))
                 ax_f.axis("off")
                 ax_f.set_title(
-                    f"#{frag['rank']}  r={frag['env_radius']}\n"
-                    f"SHAP={frag['shap']:.4f}",
+                    f"#{frag['rank']}  r={frag['env_radius']}\nSHAP={frag['shap']:.4f}",
                     fontsize=7,
                 )
             for i in range(n_frags, frag_rows * frag_cols):

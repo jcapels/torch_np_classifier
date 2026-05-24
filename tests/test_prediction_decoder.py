@@ -16,7 +16,9 @@ NUM_LABELS = 730
 
 @pytest.fixture(scope="session")
 def label_names():
-    ref = importlib.resources.files("torch_np_classifier.data").joinpath("label_names.pkl")
+    ref = importlib.resources.files("torch_np_classifier.data").joinpath(
+        "label_names.pkl"
+    )
     with importlib.resources.as_file(ref) as path:
         with open(path, "rb") as f:
             return pickle.load(f)
@@ -26,8 +28,8 @@ def label_names():
 def single_probs():
     """Probabilities for one molecule: indices 0, 8, 100 above threshold."""
     probs = np.zeros(NUM_LABELS)
-    probs[0] = 0.9    # pathway
-    probs[8] = 0.8    # superclass
+    probs[0] = 0.9  # pathway
+    probs[8] = 0.8  # superclass
     probs[100] = 0.7  # class
     return probs
 
@@ -36,8 +38,8 @@ def single_probs():
 def batch_probs(single_probs):
     """Batch of two molecules."""
     second = np.zeros(NUM_LABELS)
-    second[3] = 0.95    # pathway
-    second[10] = 0.6    # superclass
+    second[3] = 0.95  # pathway
+    second[10] = 0.6  # superclass
     second[200] = 0.51  # class
     return np.stack([single_probs, second])
 
@@ -115,7 +117,7 @@ class TestSingleMolecule:
 
     def test_boundary_at_threshold(self, label_names):
         probs = np.zeros(NUM_LABELS)
-        probs[0] = 0.5    # exactly at threshold → included
+        probs[0] = 0.5  # exactly at threshold → included
         probs[1] = 0.499  # just below → excluded
         result = decode_predictions(probs, label_names, threshold=0.5)
         assert label_names[0] in result["pathway"]
@@ -163,5 +165,5 @@ class TestBatch:
 
     def test_single_row_batch_matches_single(self, single_probs, label_names):
         single_result = decode_predictions(single_probs, label_names)
-        batch_result  = decode_predictions(single_probs[np.newaxis, :], label_names)
+        batch_result = decode_predictions(single_probs[np.newaxis, :], label_names)
         assert batch_result[0] == single_result

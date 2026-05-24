@@ -61,7 +61,9 @@ class TestAveragePrecisionMacro:
 
     def test_perfect_score(self, perfect_labels):
         y_true, y_pred = perfect_labels
-        assert average_precision_macro(y_true, y_pred.astype(float)) == pytest.approx(1.0)
+        assert average_precision_macro(y_true, y_pred.astype(float)) == pytest.approx(
+            1.0
+        )
 
 
 class TestGroupMetrics:
@@ -75,8 +77,12 @@ class TestGroupMetrics:
     def test_average_precision_by_group(self, binary_labels):
         y_true, y_pred = binary_labels
         indexes = [3, 4, 5]
-        score_group = average_precision_macro_by_group(y_true, y_pred.astype(float), indexes)
-        score_direct = average_precision_macro(y_true[:, indexes], y_pred[:, indexes].astype(float))
+        score_group = average_precision_macro_by_group(
+            y_true, y_pred.astype(float), indexes
+        )
+        score_direct = average_precision_macro(
+            y_true[:, indexes], y_pred[:, indexes].astype(float)
+        )
         assert score_group == pytest.approx(score_direct)
 
 

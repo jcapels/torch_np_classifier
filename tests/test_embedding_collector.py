@@ -44,8 +44,12 @@ class TestEmbeddingCollectorCollect:
 
         outputs1 = _make_fake_outputs(batch_size=BATCH_SIZE)
         outputs2 = _make_fake_outputs(batch_size=BATCH_SIZE)
-        collector.on_predict_batch_end(trainer, pl_module, outputs1, batch=None, batch_idx=0)
-        collector.on_predict_batch_end(trainer, pl_module, outputs2, batch=None, batch_idx=1)
+        collector.on_predict_batch_end(
+            trainer, pl_module, outputs1, batch=None, batch_idx=0
+        )
+        collector.on_predict_batch_end(
+            trainer, pl_module, outputs2, batch=None, batch_idx=1
+        )
 
         collector.on_predict_end(trainer, pl_module)
 
@@ -86,7 +90,11 @@ class TestEmbeddingCollectorCollect:
         # Second run — internal state must be reset
         collector.on_predict_start(trainer, pl_module)
         collector.on_predict_batch_end(
-            trainer, pl_module, _make_fake_outputs(batch_size=2), batch=None, batch_idx=0
+            trainer,
+            pl_module,
+            _make_fake_outputs(batch_size=2),
+            batch=None,
+            batch_idx=0,
         )
         collector.on_predict_end(trainer, pl_module)
         # Should only contain results from the second run

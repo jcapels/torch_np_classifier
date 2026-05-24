@@ -6,14 +6,14 @@ from typing import Dict, List, Union
 
 import numpy as np
 
-PATHWAY_SLICE    = slice(None, 7)
+PATHWAY_SLICE = slice(None, 7)
 SUPERCLASS_SLICE = slice(7, 77)
-CLASS_SLICE      = slice(77, None)
+CLASS_SLICE = slice(77, None)
 
 _LEVEL_SLICES: Dict[str, slice] = {
-    "pathway":    PATHWAY_SLICE,
+    "pathway": PATHWAY_SLICE,
     "superclass": SUPERCLASS_SLICE,
-    "class":      CLASS_SLICE,
+    "class": CLASS_SLICE,
 }
 
 

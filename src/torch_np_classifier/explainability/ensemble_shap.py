@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import io
 import warnings
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -35,9 +35,9 @@ _LEVELS = ("pathway", "superclass", "class")
 def _level_attrs(ensemble: NPClassifierEnsemble):
     """Return (model, label_list) for each level in canonical order."""
     return {
-        "pathway":    (ensemble.pathway_model,    ensemble._pathway_labels),
+        "pathway": (ensemble.pathway_model, ensemble._pathway_labels),
         "superclass": (ensemble.superclass_model, ensemble._superclass_labels),
-        "class":      (ensemble.class_model,      ensemble._class_labels),
+        "class": (ensemble.class_model, ensemble._class_labels),
     }
 
 
@@ -96,7 +96,9 @@ class NPClassifierEnsembleSHAP:
         attrs = _level_attrs(self.ensemble)
         model, label_list = attrs[level]
 
-        indices = [label_list.index(l) for l in predicted_labels if l in label_list]
+        indices = [
+            label_list.index(lbl) for lbl in predicted_labels if lbl in label_list
+        ]
         if not indices:
             warnings.warn(
                 f"None of the predicted {level} labels {predicted_labels!r} "
@@ -107,12 +109,12 @@ class NPClassifierEnsembleSHAP:
             return None
 
         explainer = NPClassifierSHAP(model, self._bg, class_indices=indices)
-        sv = explainer.shap_values(features)   # (1, 6144, n_predicted)
+        sv = explainer.shap_values(features)  # (1, 6144, n_predicted)
 
         return {
-            "labels":    predicted_labels,
-            "indices":   indices,
-            "shap":      sv,
+            "labels": predicted_labels,
+            "indices": indices,
+            "shap": sv,
             "explainer": explainer,
         }
 
@@ -144,7 +146,7 @@ class NPClassifierEnsembleSHAP:
         Each per-level dict has keys ``"labels"``, ``"indices"``, ``"shap"``,
         ``"explainer"`` (see :meth:`_build_level_explainer`).
         """
-        features   = featurizer.transform([smiles])
+        features = featurizer.transform([smiles])
         prediction = self.ensemble.predict(smiles, check_glycoside=True)
 
         result: Dict = {"prediction": prediction, "features": features}
@@ -189,22 +191,24 @@ class NPClassifierEnsembleSHAP:
 
         try:
             import matplotlib.pyplot as plt
-            from PIL import Image
         except ImportError as exc:
             raise ImportError(
                 "matplotlib and Pillow are required: pip install matplotlib Pillow"
             ) from exc
 
-        exp        = self.explain_smiles(smiles, featurizer)
+        exp = self.explain_smiles(smiles, featurizer)
         level_data = exp[level]
 
         if level_data is None:
             fig, ax = plt.subplots(figsize=(6, 2))
             ax.text(
-                0.5, 0.5,
+                0.5,
+                0.5,
                 f"No {level} predictions for this molecule.",
-                ha="center", va="center",
-                transform=ax.transAxes, fontsize=11,
+                ha="center",
+                va="center",
+                transform=ax.transAxes,
+                fontsize=11,
             )
             ax.axis("off")
             return fig
@@ -213,8 +217,11 @@ class NPClassifierEnsembleSHAP:
         for pos, label in enumerate(level_data["labels"]):
             sv_1d = level_data["shap"][0, :, pos]
             fig_panel = level_data["explainer"].explanation_figure(
-                smiles, sv_1d, featurizer,
-                class_name=f"{level}: {label}", k=k,
+                smiles,
+                sv_1d,
+                featurizer,
+                class_name=f"{level}: {label}",
+                k=k,
             )
             panels.append(self._fig_to_array(fig_panel))
             plt.close(fig_panel)
@@ -253,16 +260,15 @@ class NPClassifierEnsembleSHAP:
         """
         try:
             import matplotlib.pyplot as plt
-            from PIL import Image
         except ImportError as exc:
             raise ImportError(
                 "matplotlib and Pillow are required: pip install matplotlib Pillow"
             ) from exc
 
-        exp  = self.explain_smiles(smiles, featurizer)
+        exp = self.explain_smiles(smiles, featurizer)
         pred = exp["prediction"]
 
-        panels = []   # (level_name, label_name, image_array)
+        panels = []  # (level_name, label_name, image_array)
         for level in _LEVELS:
             level_data = exp[level]
             if level_data is None or not level_data["labels"]:
@@ -271,8 +277,11 @@ class NPClassifierEnsembleSHAP:
             label = level_data["labels"][0]
             sv_1d = level_data["shap"][0, :, 0]
             fig_panel = level_data["explainer"].explanation_figure(
-                smiles, sv_1d, featurizer,
-                class_name=f"{level}: {label}", k=k,
+                smiles,
+                sv_1d,
+                featurizer,
+                class_name=f"{level}: {label}",
+                k=k,
             )
             panels.append((level, label, self._fig_to_array(fig_panel)))
             plt.close(fig_panel)
@@ -280,10 +289,13 @@ class NPClassifierEnsembleSHAP:
         if not panels:
             fig, ax = plt.subplots(figsize=(6, 2))
             ax.text(
-                0.5, 0.5,
+                0.5,
+                0.5,
                 "No predictions found for any level.",
-                ha="center", va="center",
-                transform=ax.transAxes, fontsize=11,
+                ha="center",
+                va="center",
+                transform=ax.transAxes,
+                fontsize=11,
             )
             ax.axis("off")
             return fig
@@ -301,14 +313,16 @@ class NPClassifierEnsembleSHAP:
             ax.axis("off")
             ax.set_title(
                 f"{level.upper()} — {label}",
-                fontsize=11, fontweight="bold", pad=3,
+                fontsize=11,
+                fontweight="bold",
+                pad=3,
             )
 
         glyco_tag = "  [glycoside]" if pred.get("isglycoside") else ""
-        path_str  = ", ".join(pred["pathway"])    or "—"
-        sup_str   = ", ".join(pred["superclass"]) or "—"
-        cls_str   = ", ".join(pred["class"])       or "—"
-        suptitle  = (
+        path_str = ", ".join(pred["pathway"]) or "—"
+        sup_str = ", ".join(pred["superclass"]) or "—"
+        cls_str = ", ".join(pred["class"]) or "—"
+        suptitle = (
             f"Ensemble SHAP Explanation{glyco_tag}\n"
             f"Pathway: {path_str}   |   "
             f"Superclass: {sup_str}   |   "
@@ -327,6 +341,7 @@ class NPClassifierEnsembleSHAP:
         fig.savefig(buf, format="png", dpi=100, bbox_inches="tight")
         buf.seek(0)
         from PIL import Image
+
         return np.array(Image.open(buf))
 
     @staticmethod
@@ -340,7 +355,7 @@ class NPClassifierEnsembleSHAP:
         n = len(panels)
         heights = [p.shape[0] for p in panels]
         total_h = sum(heights)
-        fig_h = max(total_h / 100, 4)    # approx inches at 100 dpi
+        fig_h = max(total_h / 100, 4)  # approx inches at 100 dpi
         fig_w = max(panels[0].shape[1] / 100, 8)
 
         fig, axes = plt.subplots(n, 1, figsize=(fig_w, fig_h))

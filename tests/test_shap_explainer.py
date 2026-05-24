@@ -13,16 +13,17 @@ from torch_np_classifier.explainability.shap_explainer import (
 shap = pytest.importorskip("shap")
 
 # Small constants so tests run quickly
-INPUT_DIM    = 6144
-NUM_CATS     = 10   # small model for speed
+INPUT_DIM = 6144
+NUM_CATS = 10  # small model for speed
 N_BACKGROUND = 8
-N_SAMPLES    = 3
-CLASS_IDX    = [0, 2, 5]
+N_SAMPLES = 3
+CLASS_IDX = [0, 2, 5]
 
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture(scope="module")
 def small_model():
@@ -57,6 +58,7 @@ def explainer_all(small_model, background):
 # _ClassSubsetWrapper
 # ---------------------------------------------------------------------------
 
+
 class TestClassSubsetWrapper:
     def test_full_output(self, small_model):
         wrapper = _ClassSubsetWrapper(small_model.model, class_indices=None)
@@ -71,11 +73,11 @@ class TestClassSubsetWrapper:
         assert out.shape == (2, len(CLASS_IDX))
 
     def test_subset_values_match_full(self, small_model):
-        full    = _ClassSubsetWrapper(small_model.model, class_indices=None)
-        subset  = _ClassSubsetWrapper(small_model.model, class_indices=CLASS_IDX)
+        full = _ClassSubsetWrapper(small_model.model, class_indices=None)
+        subset = _ClassSubsetWrapper(small_model.model, class_indices=CLASS_IDX)
         x = torch.randn(2, INPUT_DIM)
         with torch.no_grad():
-            full_out   = full(x)
+            full_out = full(x)
             subset_out = subset(x)
         for pos, cls in enumerate(CLASS_IDX):
             np.testing.assert_allclose(
@@ -88,6 +90,7 @@ class TestClassSubsetWrapper:
 # ---------------------------------------------------------------------------
 # NPClassifierSHAP construction
 # ---------------------------------------------------------------------------
+
 
 class TestNPClassifierSHAPInit:
     def test_stores_class_indices(self, explainer_subset):
@@ -103,6 +106,7 @@ class TestNPClassifierSHAPInit:
 # ---------------------------------------------------------------------------
 # shap_values
 # ---------------------------------------------------------------------------
+
 
 class TestShapValues:
     def test_shape_subset(self, explainer_subset, sample_features):
@@ -126,6 +130,7 @@ class TestShapValues:
 # explain_smiles
 # ---------------------------------------------------------------------------
 
+
 class TestExplainSmiles:
     def test_shape(self, explainer_subset):
         feat = NPClassifierFeaturizer()
@@ -137,14 +142,15 @@ class TestExplainSmiles:
 # top_feature_indices
 # ---------------------------------------------------------------------------
 
+
 class TestTopFeatureIndices:
     @pytest.fixture
     def sv_1d(self):
         arr = np.zeros(INPUT_DIM)
-        arr[10]  = 0.9   # highest positive
-        arr[500] = 0.5   # second positive
+        arr[10] = 0.9  # highest positive
+        arr[500] = 0.5  # second positive
         arr[200] = -0.8  # negative (ignored in positive_only mode)
-        arr[1]   = 0.3   # third positive
+        arr[1] = 0.3  # third positive
         return arr
 
     def test_returns_list(self, explainer_subset, sv_1d):
@@ -157,7 +163,7 @@ class TestTopFeatureIndices:
 
     def test_top_k_order_positive_only(self, explainer_subset, sv_1d):
         result = explainer_subset.top_feature_indices(sv_1d, k=3, positive_only=True)
-        assert result[0] == 10   # highest positive first
+        assert result[0] == 10  # highest positive first
         assert result[1] == 500
         assert result[2] == 1
 
@@ -167,7 +173,7 @@ class TestTopFeatureIndices:
 
     def test_abs_mode_includes_negative(self, explainer_subset, sv_1d):
         result = explainer_subset.top_feature_indices(sv_1d, k=2, positive_only=False)
-        assert 10 in result   # abs 0.9
+        assert 10 in result  # abs 0.9
         assert 200 in result  # abs 0.8
 
     def test_k_larger_than_nonzero(self, explainer_subset):
@@ -186,6 +192,7 @@ class TestTopFeatureIndices:
 # draw_explanation
 # ---------------------------------------------------------------------------
 
+
 class TestDrawExplanation:
     @pytest.fixture
     def sv_1d(self, explainer_subset, sample_features):
@@ -202,6 +209,7 @@ class TestDrawExplanation:
 
     def test_returns_image_when_not_svg(self, explainer_subset, sv_1d):
         from PIL import Image
+
         feat = NPClassifierFeaturizer()
         result = explainer_subset.draw_explanation(
             "Cn1cnc2c1c(=O)n(c(=O)n2C)C", sv_1d, feat, as_svg=False

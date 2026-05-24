@@ -1,7 +1,6 @@
 """Tests for NPClassifierFeaturizer and featurize_smiles."""
 
 import numpy as np
-import pytest
 
 from torch_np_classifier.featurization.np_classifier_fp import (
     NPClassifierFeaturizer,

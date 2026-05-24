@@ -230,6 +230,7 @@ def draw_bit_fragment(
     # DrawMorganEnv returns raw PNG bytes when useSVG=False
     try:
         from PIL import Image as _PIL_Image
+
         return _PIL_Image.open(io.BytesIO(result))
     except ImportError:
         return result  # fall back to raw bytes
@@ -430,7 +431,9 @@ class NPClassifierFeaturizer:
                 for atom_idx, info_radius in bit_info[morgan_bit]:
                     if info_radius != env_radius:
                         continue
-                    atoms, bonds = _environment_atoms_and_bonds(mol, atom_idx, env_radius)
+                    atoms, bonds = _environment_atoms_and_bonds(
+                        mol, atom_idx, env_radius
+                    )
                     for a in atoms:
                         highlight_atoms_set.add(a)
                         atom_colors.setdefault(a, color)
