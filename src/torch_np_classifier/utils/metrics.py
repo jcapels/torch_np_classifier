@@ -49,15 +49,8 @@ def map_mean_sd(y_true, y_pred):
     """
     y_true = np.asarray(y_true, dtype=float)
     y_pred = np.asarray(y_pred, dtype=float)
-    per_label = []
-    for col in range(y_true.shape[1]):
-        if y_true[:, col].sum() == 0:
-            continue
-        per_label.append(average_precision_score(y_true[:, col], y_pred[:, col]))
-    if not per_label:
-        return 0.0, 0.0
-    arr = np.array(per_label)
-    return float(arr.mean()), float(arr.std())
+    score = average_precision_score(y_true, y_pred, average="macro")
+    return score, 0.0
 
 
 def map_mean_sd_by_group(y_true, y_pred, group_indexes):

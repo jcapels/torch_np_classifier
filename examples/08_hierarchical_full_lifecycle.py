@@ -43,6 +43,7 @@ LABEL_START = 2   # CSV columns to skip: 'key' and 'SMILES'
 
 BATCH_SIZE  = 128
 MAX_EPOCHS  = 50
+MAX_EPOCHS = {"pathway": 4, "superclass": 8, "class": 15}
 LR          = 1e-5
 CKPT_DIR    = "checkpoints/hierarchical_lifecycle/"
 
@@ -99,7 +100,7 @@ for level_name, label_sl in LEVELS.items():
     model = NPClassifierLightning(num_categories=num_cats, lr=LR, scheduler=False)
 
     trainer = lightning.Trainer(
-        max_epochs=MAX_EPOCHS,
+        max_epochs=MAX_EPOCHS[level_name],
         log_every_n_steps=10,
         enable_progress_bar=True,
         devices=1,
@@ -131,7 +132,7 @@ predict_features = featurizer.transform(PREDICT_SMILES)
 predict_dataset  = NPClassifierDataset(predict_features)
 predict_loader   = DataLoader(predict_dataset, batch_size=32, num_workers=0)
 
-pred_trainer = lightning.Trainer(enable_progress_bar=False, logger=False)
+pred_trainer = lightning.Trainer(enable_progress_bar=False, logger=False, devices=1)
 
 all_probs: Dict[str, np.ndarray] = {}
 for level_name, m in loaded_models.items():
