@@ -21,9 +21,9 @@ from torch.utils.data import DataLoader
 from torch_np_classifier import (
     NPClassifierDataModule,
     NPClassifierDataset,
-    NPClassifierFeaturizer,
     NPClassifierLightning,
 )
+from torch_np_classifier.utils.metrics import map_mean_sd
 
 # ---------------------------------------------------------------------------
 # Config
@@ -123,14 +123,18 @@ probs        = torch.cat(raw_outputs, dim=0).numpy()
 preds        = (probs >= THRESHOLD).astype(np.int32)
 
 # ---------------------------------------------------------------------------
-# F1 per level
+# Metrics per level
 # ---------------------------------------------------------------------------
-def report_f1(name: str, y_true: np.ndarray, y_pred: np.ndarray) -> None:
-    macro = f1_score(y_true, y_pred, average="macro", zero_division=0)
-    micro = f1_score(y_true, y_pred, average="micro", zero_division=0)
-    print(f"  {name:<25}  macro F1 = {macro:.4f}   micro F1 = {micro:.4f}")
+def report_metrics(name: str, y_true: np.ndarray, y_prob: np.ndarray, y_pred: np.ndarray) -> None:
+    macro_f1 = f1_score(y_true, y_pred, average="macro", zero_division=0)
+    micro_f1 = f1_score(y_true, y_pred, average="micro", zero_division=0)
+    map_mean, map_sd = map_mean_sd(y_true, y_prob)
+    print(
+        f"  {name:<25}  macro F1 = {macro_f1:.4f}   micro F1 = {micro_f1:.4f}"
+        f"   MAP = {map_mean:.4f} ± {map_sd:.4f}"
+    )
 
-print("\n=== Test F1 Scores ===")
-report_f1("Pathway    [:7]",     true_labels[:, PATHWAY_SLICE],    preds[:, PATHWAY_SLICE])
-report_f1("Superclass [7:77]",   true_labels[:, SUPERCLASS_SLICE], preds[:, SUPERCLASS_SLICE])
-report_f1("Class      [77:]",    true_labels[:, CLASS_SLICE],      preds[:, CLASS_SLICE])
+print("\n=== Test Scores ===")
+report_metrics("Pathway    [:7]",    true_labels[:, PATHWAY_SLICE],    probs[:, PATHWAY_SLICE],    preds[:, PATHWAY_SLICE])
+report_metrics("Superclass [7:77]",  true_labels[:, SUPERCLASS_SLICE], probs[:, SUPERCLASS_SLICE], preds[:, SUPERCLASS_SLICE])
+report_metrics("Class      [77:]",   true_labels[:, CLASS_SLICE],      probs[:, CLASS_SLICE],      preds[:, CLASS_SLICE])

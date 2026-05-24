@@ -33,6 +33,7 @@ from torch_np_classifier import (
     NPClassifierFeaturizer,
     NPClassifierLightning,
 )
+from torch_np_classifier.utils.metrics import map_mean_sd
 
 # ---------------------------------------------------------------------------
 # Config
@@ -129,15 +130,23 @@ for level_name, (label_sl, num_cats_hint) in LEVELS.items():
 # ---------------------------------------------------------------------------
 print("\n\n=== Test Evaluation ===")
 
-def report_f1(name: str, y_true: np.ndarray, y_pred: np.ndarray) -> None:
-    macro = f1_score(y_true, y_pred, average="macro", zero_division=0)
-    micro = f1_score(y_true, y_pred, average="micro", zero_division=0)
-    print(f"  {name:<14}  macro F1 = {macro:.4f}   micro F1 = {micro:.4f}")
+
+def report_metrics(name: str, y_true: np.ndarray, y_prob: np.ndarray, y_pred: np.ndarray) -> None:
+    macro_f1 = f1_score(y_true, y_pred, average="macro", zero_division=0)
+    micro_f1 = f1_score(y_true, y_pred, average="micro", zero_division=0)
+    map_mean, map_sd = map_mean_sd(y_true, y_prob)
+    print(
+        f"  {name:<14}  macro F1 = {macro_f1:.4f}   micro F1 = {micro_f1:.4f}"
+        f"   MAP = {map_mean:.4f} ± {map_sd:.4f}"
+    )
+
 
 pred_trainer = lightning.Trainer(enable_progress_bar=False, devices=1)
-test_loader  = DataLoader(
+test_loader = DataLoader(
     NPClassifierDataset(test_features),
-    batch_size=BATCH_SIZE, shuffle=False, num_workers=4,
+    batch_size=BATCH_SIZE,
+    shuffle=False,
+    num_workers=4,
 )
 
 for level_name, (label_sl, _) in LEVELS.items():
@@ -154,6 +163,6 @@ for level_name, (label_sl, _) in LEVELS.items():
     preds = (probs >= THRESHOLD).astype(np.int32)
 
     true_labels = test_labels_all[:, label_sl]
-    report_f1(level_name, true_labels, preds)
+    report_metrics(level_name, true_labels, probs, preds)
 
 print("\nDone.")
