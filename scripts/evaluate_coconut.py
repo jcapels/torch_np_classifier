@@ -7,7 +7,6 @@ Usage
         --superclass-ckpt checkpoints/superclass/best.ckpt \\
         --class-ckpt      checkpoints/class/best.ckpt \\
         [--csv coconut_csv-05-2026.csv] \\
-        [--batch-size 256] \\
         [--output results.csv]
 
 Metrics reported (per level)
@@ -26,7 +25,6 @@ import warnings
 from pathlib import Path
 
 import pandas as pd
-from tqdm import tqdm
 
 from torch_np_classifier import NPClassifierPipeline
 
@@ -41,8 +39,6 @@ parser.add_argument("--superclass-ckpt", required=True, help="superclass .ckpt p
 parser.add_argument("--class-ckpt",      required=True, help="class .ckpt path")
 parser.add_argument("--csv", default="coconut_csv-05-2026.csv",
                     help="path to COCONUT CSV (default: coconut_csv-05-2026.csv)")
-parser.add_argument("--batch-size", type=int, default=256,
-                    help="SMILES per prediction batch (default: 256)")
 parser.add_argument("--output", default=None,
                     help="optional path to save per-molecule results CSV")
 parser.add_argument("--pathway-threshold",    type=float, default=0.6)
@@ -83,22 +79,17 @@ pipeline = NPClassifierPipeline.from_checkpoints(
 print("Pipeline ready.\n")
 
 # ---------------------------------------------------------------------------
-# Batch predictions
+# Predict whole dataset at once
 # ---------------------------------------------------------------------------
-all_results = []
 n = len(smiles_list)
-batch_size = args.batch_size
 
-print(f"Predicting {n:,} molecules in batches of {batch_size} …")
+print(f"Predicting {n:,} molecules …")
 tracemalloc.start()
 pred_start = time.perf_counter()
 
-for start in tqdm(range(0, n, batch_size)):
-    batch = smiles_list[start : start + batch_size]
-    preds = pipeline.predict(batch, check_glycoside=True)
-    if isinstance(preds, dict):
-        preds = [preds]
-    all_results.extend(preds)
+all_results = pipeline.predict(smiles_list, check_glycoside=True)
+if isinstance(all_results, dict):
+    all_results = [all_results]
 
 pred_elapsed = time.perf_counter() - pred_start
 _, peak_bytes = tracemalloc.get_traced_memory()
