@@ -52,9 +52,10 @@ _DEFAULT_ALIASES: Dict[str, str] = {
     "Spingolipids": "Sphingolipids",
 }
 
-# Glycoside SMARTS from the original NP-Classifier
-_HEXA_PYRANOSE = "[O]C1C([O])C([O])C(C[O])OC1[*]"
-_PENTA_FURANOSE = "[O]CC1OC([*])C([O])C1[O]"
+# Glycoside SMARTS — O-glycosides only ([*] narrowed to O to exclude C/N-glycosides)
+_HEXA_PYRANOSE  = "[O]C1C([O])C([O])C(C[O])OC1O"   # hexose pyranose (has CH2OH at C5)
+_HEXA_DEOXY     = "CC1OC([O])C([O])C([O])C1[O]"     # 6-deoxy pyranose (CH3 at C5: rhamnose, fucose, digitoxose)
+_PENTA_FURANOSE = "[O]CC1OC([O])C([O])C1[O]"         # furanose O-glycoside
 
 
 # ── helpers ─────────────────────────────────────────────────────────────────
@@ -70,15 +71,20 @@ def _load_ontology(source: Union[str, Path, dict, None]) -> dict:
 
 
 def _is_glycoside(mol) -> bool:
-    """Return True if *mol* contains a pyranose or furanose sugar unit."""
+    """Return True if *mol* contains an O-linked pyranose or furanose sugar unit."""
     if mol is None:
         return False
     try:
         from rdkit import Chem
 
-        hexa = Chem.MolFromSmarts(_HEXA_PYRANOSE)
+        hexa  = Chem.MolFromSmarts(_HEXA_PYRANOSE)
+        deoxy = Chem.MolFromSmarts(_HEXA_DEOXY)
         penta = Chem.MolFromSmarts(_PENTA_FURANOSE)
-        return mol.HasSubstructMatch(hexa) or mol.HasSubstructMatch(penta)
+        return (
+            mol.HasSubstructMatch(hexa)
+            or mol.HasSubstructMatch(deoxy)
+            or mol.HasSubstructMatch(penta)
+        )
     except Exception:
         return False
 
