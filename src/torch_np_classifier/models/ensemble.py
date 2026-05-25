@@ -368,11 +368,34 @@ class NPClassifierEnsemble:
 
     # ── inference ───────────────────────────────────────────────────────────
 
-    def _run_model(
+    @staticmethod
+    def _get_device() -> torch.device:
+        return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    def _run_model_torch(
+        self, model: NPClassifierLightning, loader: DataLoader
+    ) -> np.ndarray:
+        device = self._get_device()
+        model = model.to(device)
+        model.eval()
+        batches = []
+        with torch.no_grad():
+            for (batch,) in loader:
+                batches.append(model(batch.to(device)))
+        return torch.cat(batches, dim=0).cpu().numpy()
+
+    def _run_model_lightning(
         self, model: NPClassifierLightning, loader: DataLoader
     ) -> np.ndarray:
         batches = self._trainer.predict(model, loader)
         return torch.cat(batches, dim=0).cpu().numpy()
+
+    def _run_model(
+        self, model: NPClassifierLightning, loader: DataLoader, n_samples: int
+    ) -> np.ndarray:
+        if n_samples >= 10_000:
+            return self._run_model_lightning(model, loader)
+        return self._run_model_torch(model, loader)
 
     def predict_from_features(
         self,
@@ -408,9 +431,10 @@ class NPClassifierEnsemble:
             shuffle=False,
             num_workers=0,
         )
-        path_probs = self._run_model(self.pathway_model, loader)
-        super_probs = self._run_model(self.superclass_model, loader)
-        class_probs = self._run_model(self.class_model, loader)
+        n = len(features)
+        path_probs = self._run_model(self.pathway_model, loader, n)
+        super_probs = self._run_model(self.superclass_model, loader, n)
+        class_probs = self._run_model(self.class_model, loader, n)
 
         if check_glycoside and mols is not None:
             glycoside_flags = Parallel(n_jobs=self.featurizer.n_jobs)(
