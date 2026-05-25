@@ -27,8 +27,10 @@ import warnings
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Union
 
+import lightning
 import numpy as np
 import torch
+from torch.utils.data import DataLoader, TensorDataset
 
 from torch_np_classifier.featurization.np_classifier_fp import NPClassifierFeaturizer
 from torch_np_classifier.models.lightning_module import NPClassifierLightning
@@ -115,11 +117,11 @@ class NPClassifierEnsemble:
         Path to ``index_v1.json``, a pre-loaded dict, or ``None`` to use the
         bundled copy.
     pathway_threshold:
-        Probability threshold for pathway predictions (default 0.5).
+        Probability threshold for pathway predictions (default 0.6).
     superclass_threshold:
-        Probability threshold for superclass predictions (default 0.3).
+        Probability threshold for superclass predictions (default 0.6).
     class_threshold:
-        Probability threshold for class predictions (default 0.1).
+        Probability threshold for class predictions (default 0.6).
     featurizer:
         ``NPClassifierFeaturizer`` used by :meth:`predict`.  Defaults to
         ``NPClassifierFeaturizer()``.
@@ -139,9 +141,9 @@ class NPClassifierEnsemble:
         superclass_labels: List[str],
         class_labels: List[str],
         ontology: Union[str, Path, dict, None] = None,
-        pathway_threshold: float = 0.5,
-        superclass_threshold: float = 0.3,
-        class_threshold: float = 0.1,
+        pathway_threshold: float = 0.6,
+        superclass_threshold: float = 0.6,
+        class_threshold: float = 0.6,
         featurizer: Optional[NPClassifierFeaturizer] = None,
         name_aliases: Optional[Dict[str, str]] = None,
     ) -> None:
@@ -171,6 +173,13 @@ class NPClassifierEnsemble:
 
         self._onto = _load_ontology(ontology)
         self._build_hierarchy(aliases)
+
+        self._trainer = lightning.Trainer(
+            enable_progress_bar=False,
+            logger=False,
+            accelerator="auto",
+            devices=1,
+        )
 
     # ── construction helpers ────────────────────────────────────────────────
 
@@ -359,12 +368,18 @@ class NPClassifierEnsemble:
 
     # ── inference ───────────────────────────────────────────────────────────
 
-    @torch.no_grad()
     def _run_model(
         self, model: NPClassifierLightning, features: np.ndarray
     ) -> np.ndarray:
-        x = torch.tensor(features, dtype=torch.float32)
-        return torch.sigmoid(model.model([x])).cpu().numpy()
+        loader = DataLoader(
+            TensorDataset(torch.tensor(features, dtype=torch.float32)),
+            batch_size=512,
+            shuffle=False,
+            num_workers=0,
+        )
+        batches = self._trainer.predict(model, loader)
+        logits = torch.cat(batches, dim=0)
+        return torch.sigmoid(logits).cpu().numpy()
 
     def predict_from_features(
         self,

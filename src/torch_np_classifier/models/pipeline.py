@@ -335,6 +335,7 @@ class NPClassifierPipeline:
                 max_epochs=self.max_epochs,
                 callbacks=callbacks or None,
                 log_every_n_steps=10,
+                accelerator="auto",
                 devices=devices,
                 enable_progress_bar=True,
             )
@@ -557,6 +558,8 @@ class NPClassifierPipeline:
         trainer = lightning.Trainer(
             enable_progress_bar=False,
             logger=False,
+            accelerator="auto",
+            devices=1,
             callbacks=[collector],
         )
         trainer.predict(model, loader)
