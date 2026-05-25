@@ -69,16 +69,13 @@ def _load_ontology(source: Union[str, Path, dict, None]) -> dict:
         return json.load(f)
 
 
-def _is_glycoside(smiles: str) -> bool:
-    """Return True if *smiles* contains a pyranose or furanose sugar unit."""
+def _is_glycoside(mol) -> bool:
+    """Return True if *mol* contains a pyranose or furanose sugar unit."""
     try:
         from rdkit import Chem
 
         hexa = Chem.MolFromSmarts(_HEXA_PYRANOSE)
         penta = Chem.MolFromSmarts(_PENTA_FURANOSE)
-        mol = Chem.MolFromSmiles(smiles)
-        if mol is None:
-            return False
         return mol.HasSubstructMatch(hexa) or mol.HasSubstructMatch(penta)
     except Exception:
         return False
@@ -378,7 +375,7 @@ class NPClassifierEnsemble:
     def predict_from_features(
         self,
         features: np.ndarray,
-        smiles_list: Optional[Sequence[str]] = None,
+        mols: Optional[Sequence] = None,
         check_glycoside: bool = True,
     ) -> List[Dict[str, object]]:
         """Run voting prediction on pre-computed fingerprint features.
@@ -387,9 +384,9 @@ class NPClassifierEnsemble:
         ----------
         features:
             Float32 array of shape ``(N, 6144)``.
-        smiles_list:
-            Optional list of SMILES (same length as *features*) used for
-            glycoside detection.  When ``None`` or ``check_glycoside=False``,
+        mols:
+            Optional list of RDKit Mol objects (same length as *features*) used
+            for glycoside detection.  When ``None`` or ``check_glycoside=False``,
             the ``"isglycoside"`` field is always ``False``.
         check_glycoside:
             Whether to run the glycoside SMARTS check.
@@ -400,6 +397,9 @@ class NPClassifierEnsemble:
         ``"isglycoside"``.  Each value is a list of label-name strings (or
         ``bool`` for ``"isglycoside"``).
         """
+        from joblib import Parallel, delayed
+        from tqdm import tqdm
+
         loader = DataLoader(
             TensorDataset(torch.tensor(features, dtype=torch.float32)),
             batch_size=512,
@@ -410,30 +410,21 @@ class NPClassifierEnsemble:
         super_probs = self._run_model(self.superclass_model, loader)
         class_probs = self._run_model(self.class_model, loader)
 
+        if check_glycoside and mols is not None:
+            glycoside_flags = Parallel(n_jobs=self.featurizer.n_jobs)(
+                delayed(_is_glycoside)(mol) if mol is not None else False
+                for mol in tqdm(mols, desc="Checking glycosides")
+            )
+        else:
+            glycoside_flags = [False] * len(features)
+
         results = []
         for i in range(len(features)):
-            p_prob = path_probs[i]
-            s_prob = super_probs[i]
-            c_prob = class_probs[i]
+            n_path = list(np.where(path_probs[i] >= self.pathway_threshold)[0])
+            n_super = list(np.where(super_probs[i] >= self.superclass_threshold)[0])
+            n_class = list(np.where(class_probs[i] >= self.class_threshold)[0])
 
-            n_path = list(np.where(p_prob >= self.pathway_threshold)[0])
-            n_super = list(np.where(s_prob >= self.superclass_threshold)[0])
-            n_class = list(np.where(c_prob >= self.class_threshold)[0])
-
-            if not n_path:
-                n_path = [int(np.argmax(p_prob))]
-            if not n_super:
-                n_super = [int(np.argmax(s_prob))]
-            if not n_class:
-                n_class = [int(np.argmax(c_prob))]
-
-            glycoside = (
-                _is_glycoside(smiles_list[i])
-                if check_glycoside and smiles_list is not None
-                else False
-            )
-
-            voted = self._vote(n_path, n_super, n_class, s_prob, c_prob, glycoside)
+            voted = self._vote(n_path, n_super, n_class, super_probs[i], class_probs[i], glycoside_flags[i])
             results.append(voted)
 
         return results
@@ -461,9 +452,9 @@ class NPClassifierEnsemble:
         single = isinstance(smiles, str)
         smiles_list = [smiles] if single else list(smiles)
 
-        features = self.featurizer.transform(smiles_list)
+        features, mols = self.featurizer.transform_with_mols(smiles_list)
         results = self.predict_from_features(
-            features, smiles_list, check_glycoside=check_glycoside
+            features, mols, check_glycoside=check_glycoside
         )
         return results[0] if single else results
 

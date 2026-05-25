@@ -79,45 +79,13 @@ def fp_index_to_radius_bit(fp_index: int, radius: int = 2) -> Tuple[int, int]:
     return env_radius, morgan_bit
 
 
-def featurize_smiles(
-    smiles: str,
-    radius: int = 2,
-    use_chirality: bool = False,
-    return_bit_info: bool = False,
-) -> Union[Optional[np.ndarray], Tuple[Optional[np.ndarray], BitInfoMap]]:
-    """Convert one SMILES string to a 6144-dim float32 fingerprint array.
-
-    Parameters
-    ----------
-    smiles:
-        Input SMILES string.
-    radius:
-        Maximum Morgan radius.  The output length is ``2048 * (radius + 1)``.
-    use_chirality:
-        Whether to include chirality in the Morgan fingerprint.
-    return_bit_info:
-        When ``True``, return a tuple ``(fp, bit_info_map)`` where
-        ``bit_info_map`` maps each active Morgan bit to a list of
-        ``(atom_idx, env_radius)`` tuples.
-
-    Returns
-    -------
-    np.ndarray of shape (2048 * (radius + 1),) and dtype float32, or None if
-    RDKit cannot parse the molecule.  If ``return_bit_info`` is True, returns
-    a ``(fp, bit_info_map)`` tuple (``fp`` may be None).
-
-    Examples
-    --------
-    >>> fp = featurize_smiles("Cn1cnc2c1c(=O)n(c(=O)n2C)C")  # caffeine
-    >>> fp.shape
-    (6144,)
-    >>> fp.dtype
-    dtype('float32')
-    """
-    mol = Chem.MolFromSmiles(smiles)
-    if mol is None:
-        return (None, {}) if return_bit_info else None
-
+def _compute_fp(
+    mol: "Chem.Mol",
+    radius: int,
+    use_chirality: bool,
+    return_bit_info: bool,
+) -> Union[np.ndarray, Tuple[np.ndarray, BitInfoMap]]:
+    """Compute fingerprint from a pre-parsed Mol object."""
     binary = np.zeros(2048 * radius, dtype=int)
     formula = np.zeros(2048, dtype=int)
 
@@ -161,6 +129,60 @@ def featurize_smiles(
     if return_bit_info:
         return fp, copy.deepcopy(mol_bi)
     return fp
+
+
+def featurize_smiles(
+    smiles: str,
+    radius: int = 2,
+    use_chirality: bool = False,
+    return_bit_info: bool = False,
+) -> Union[Optional[np.ndarray], Tuple[Optional[np.ndarray], BitInfoMap]]:
+    """Convert one SMILES string to a 6144-dim float32 fingerprint array.
+
+    Parameters
+    ----------
+    smiles:
+        Input SMILES string.
+    radius:
+        Maximum Morgan radius.  The output length is ``2048 * (radius + 1)``.
+    use_chirality:
+        Whether to include chirality in the Morgan fingerprint.
+    return_bit_info:
+        When ``True``, return a tuple ``(fp, bit_info_map)`` where
+        ``bit_info_map`` maps each active Morgan bit to a list of
+        ``(atom_idx, env_radius)`` tuples.
+
+    Returns
+    -------
+    np.ndarray of shape (2048 * (radius + 1),) and dtype float32, or None if
+    RDKit cannot parse the molecule.  If ``return_bit_info`` is True, returns
+    a ``(fp, bit_info_map)`` tuple (``fp`` may be None).
+
+    Examples
+    --------
+    >>> fp = featurize_smiles("Cn1cnc2c1c(=O)n(c(=O)n2C)C")  # caffeine
+    >>> fp.shape
+    (6144,)
+    >>> fp.dtype
+    dtype('float32')
+    """
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        return (None, {}) if return_bit_info else None
+    return _compute_fp(mol, radius, use_chirality, return_bit_info)
+
+
+def _featurize_smiles_with_mol(
+    smiles: str,
+    radius: int = 2,
+    use_chirality: bool = False,
+) -> Tuple[Optional[np.ndarray], Optional["Chem.Mol"]]:
+    """Return ``(fp, mol)`` — mol is reused downstream (e.g. glycoside check)."""
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        return None, None
+    fp = _compute_fp(mol, radius, use_chirality, return_bit_info=False)
+    return fp, mol
 
 
 def _environment_atoms_and_bonds(
@@ -300,6 +322,35 @@ class NPClassifierFeaturizer:
             if fp is not None:
                 out[i] = fp
         return out
+
+    def transform_with_mols(
+        self, smiles_list: List[str]
+    ) -> Tuple[np.ndarray, List[Optional["Chem.Mol"]]]:
+        """Featurize *smiles_list* and return the parsed Mol objects alongside features.
+
+        Avoids re-parsing SMILES when the Mol is needed downstream (e.g. for
+        substructure-based glycoside detection).
+
+        Returns
+        -------
+        (features, mols) where features has shape ``(N, feature_dim)`` and
+        mols is a list of length N with ``None`` for any unparseable SMILES.
+        """
+        from tqdm import tqdm
+        from joblib import Parallel, delayed
+
+        results = Parallel(n_jobs=self.n_jobs)(
+            delayed(_featurize_smiles_with_mol)(smi, self.radius, self.use_chirality)
+            for smi in tqdm(smiles_list, total=len(smiles_list), desc="Featurizing SMILES")
+        )
+
+        out = np.zeros((len(smiles_list), self.feature_dim), dtype=np.float32)
+        mols: List[Optional["Chem.Mol"]] = []
+        for i, (fp, mol) in enumerate(results):
+            if fp is not None:
+                out[i] = fp
+            mols.append(mol)
+        return out, mols
 
     # ------------------------------------------------------------------
     # Explainability helpers
