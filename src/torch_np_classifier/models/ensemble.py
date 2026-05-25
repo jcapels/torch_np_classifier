@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import itertools
 import json
+import logging
 import pickle
 import warnings
 from pathlib import Path
@@ -174,6 +175,7 @@ class NPClassifierEnsemble:
         self._onto = _load_ontology(ontology)
         self._build_hierarchy(aliases)
 
+        logging.getLogger("lightning.pytorch").setLevel(logging.WARNING)
         self._trainer = lightning.Trainer(
             enable_progress_bar=False,
             logger=False,
@@ -378,8 +380,7 @@ class NPClassifierEnsemble:
             num_workers=0,
         )
         batches = self._trainer.predict(model, loader)
-        logits = torch.cat(batches, dim=0)
-        return torch.sigmoid(logits).cpu().numpy()
+        return torch.cat(batches, dim=0).cpu().numpy()
 
     def predict_from_features(
         self,
