@@ -175,7 +175,6 @@ class NPClassifierEnsemble:
         self._onto = _load_ontology(ontology)
         self._build_hierarchy(aliases)
 
-        logging.getLogger("lightning.pytorch").setLevel(logging.WARNING)
         self._trainer = lightning.Trainer(
             enable_progress_bar=False,
             logger=False,

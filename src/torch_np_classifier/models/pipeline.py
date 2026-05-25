@@ -134,8 +134,11 @@ class NPClassifierPipeline:
         self.pathway_threshold = pathway_threshold
         self.superclass_threshold = superclass_threshold
         self.class_threshold = class_threshold
+        # use n_jobs = half of available cores for featurization by default, but allow the user
+        # Get half of available cores
+        n_cores = os.cpu_count() // 2
         self.featurizer = (
-            featurizer if featurizer is not None else NPClassifierFeaturizer()
+            featurizer if featurizer is not None else NPClassifierFeaturizer(n_jobs=n_cores)
         )
 
         self._ensemble: Optional[NPClassifierEnsemble] = None
@@ -556,7 +559,7 @@ class NPClassifierPipeline:
 
         collector = EmbeddingCollector()
         trainer = lightning.Trainer(
-            enable_progress_bar=False,
+            enable_progress_bar=True,
             logger=False,
             accelerator="auto",
             devices=1,
