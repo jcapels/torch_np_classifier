@@ -647,6 +647,11 @@ class NPClassifierEnsemble:
                     )
                 )
 
+        if not n_super:
+            n_super = [int(np.argmax(pred_super))]
+        if not n_class:
+            n_class = [int(np.argmax(pred_class))]
+
         return {
             "pathway": [self._pathway_labels[r] for r in path],
             "superclass": [self._superclass_labels[s] for s in n_super],
