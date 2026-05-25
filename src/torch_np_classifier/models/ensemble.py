@@ -407,6 +407,10 @@ class NPClassifierEnsemble:
 
             if not n_path:
                 n_path = [int(np.argmax(p_prob))]
+            if not n_super:
+                n_super = [int(np.argmax(s_prob))]
+            if not n_class:
+                n_class = [int(np.argmax(c_prob))]
 
             glycoside = (
                 _is_glycoside(smiles_list[i])
