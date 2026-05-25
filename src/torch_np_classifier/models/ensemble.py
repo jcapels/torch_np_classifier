@@ -371,14 +371,8 @@ class NPClassifierEnsemble:
     # ── inference ───────────────────────────────────────────────────────────
 
     def _run_model(
-        self, model: NPClassifierLightning, features: np.ndarray
+        self, model: NPClassifierLightning, loader: DataLoader
     ) -> np.ndarray:
-        loader = DataLoader(
-            TensorDataset(torch.tensor(features, dtype=torch.float32)),
-            batch_size=512,
-            shuffle=False,
-            num_workers=0,
-        )
         batches = self._trainer.predict(model, loader)
         return torch.cat(batches, dim=0).cpu().numpy()
 
@@ -407,9 +401,15 @@ class NPClassifierEnsemble:
         ``"isglycoside"``.  Each value is a list of label-name strings (or
         ``bool`` for ``"isglycoside"``).
         """
-        path_probs = self._run_model(self.pathway_model, features)
-        super_probs = self._run_model(self.superclass_model, features)
-        class_probs = self._run_model(self.class_model, features)
+        loader = DataLoader(
+            TensorDataset(torch.tensor(features, dtype=torch.float32)),
+            batch_size=512,
+            shuffle=False,
+            num_workers=0,
+        )
+        path_probs = self._run_model(self.pathway_model, loader)
+        super_probs = self._run_model(self.superclass_model, loader)
+        class_probs = self._run_model(self.class_model, loader)
 
         results = []
         for i in range(len(features)):
