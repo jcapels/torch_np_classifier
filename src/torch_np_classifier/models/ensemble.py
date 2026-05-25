@@ -71,6 +71,8 @@ def _load_ontology(source: Union[str, Path, dict, None]) -> dict:
 
 def _is_glycoside(mol) -> bool:
     """Return True if *mol* contains a pyranose or furanose sugar unit."""
+    if mol is None:
+        return False
     try:
         from rdkit import Chem
 
@@ -412,7 +414,7 @@ class NPClassifierEnsemble:
 
         if check_glycoside and mols is not None:
             glycoside_flags = Parallel(n_jobs=self.featurizer.n_jobs)(
-                delayed(_is_glycoside)(mol) if mol is not None else False
+                delayed(_is_glycoside)(mol)
                 for mol in tqdm(mols, desc="Checking glycosides")
             )
         else:
