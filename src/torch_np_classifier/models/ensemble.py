@@ -173,7 +173,7 @@ class NPClassifierEnsemble:
         self._build_hierarchy(aliases)
 
         self._trainer = lightning.Trainer(
-            enable_progress_bar=False,
+            enable_progress_bar=True,
             logger=False,
             accelerator="auto",
             devices=1,
