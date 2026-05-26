@@ -20,6 +20,9 @@ Typical workflow
 ...     class_ckpt="class.ckpt",
 ... )
 >>>
+>>> # Or load the bundled pretrained models (downloaded on first call)
+>>> pipeline = NPClassifierPipeline.from_pretrained()
+>>>
 >>> # Full voted prediction
 >>> result = pipeline.predict("Cn1cnc2c1c(=O)n(c(=O)n2C)C")
 >>> result["pathway"]
@@ -67,6 +70,7 @@ from torch_np_classifier.models.lightning_module import NPClassifierLightning
 
 _DATA_DIR = Path(__file__).parent.parent / "data"
 _LABEL_PKL = _DATA_DIR / "label_names.pkl"
+_SHAP_BG_CSV = _DATA_DIR / "shap_background.csv"
 
 _N_PATHWAY = 7
 _N_SUPERCLASS = 70
@@ -208,6 +212,44 @@ class NPClassifierPipeline:
             with open(pkl_path, "rb") as f:
                 pipeline._label_names = pickle.load(f)
 
+        return pipeline
+
+    @classmethod
+    def from_pretrained(
+        cls,
+        cache_dir: Optional[Union[str, Path]] = None,
+        force_download: bool = False,
+        **kwargs,
+    ) -> "NPClassifierPipeline":
+        """Build a pipeline from the bundled pretrained Zenodo checkpoints.
+
+        On first call the three checkpoint files are downloaded from Zenodo and
+        cached under ``~/.cache/torch_np_classifier/`` (or *cache_dir* if
+        given).  Subsequent calls reuse the cached files.
+
+        Parameters
+        ----------
+        cache_dir:
+            Directory where the downloaded checkpoints are stored.  Defaults
+            to ``~/.cache/torch_np_classifier/``.
+        force_download:
+            Re-download even if cached checkpoints already exist.
+        **kwargs:
+            Forwarded to :class:`NPClassifierPipeline` (e.g.
+            ``pathway_threshold``, ``superclass_threshold``,
+            ``class_threshold``, ``featurizer``).
+        """
+        pipeline = cls(**kwargs)
+        pipeline._ensemble = NPClassifierEnsemble.from_pretrained(
+            cache_dir=cache_dir,
+            force_download=force_download,
+            pathway_threshold=pipeline.pathway_threshold,
+            superclass_threshold=pipeline.superclass_threshold,
+            class_threshold=pipeline.class_threshold,
+            featurizer=pipeline.featurizer,
+        )
+        with open(_LABEL_PKL, "rb") as f:
+            pipeline._label_names = pickle.load(f)
         return pipeline
 
     # ── training ─────────────────────────────────────────────────────────────
@@ -572,18 +614,36 @@ class NPClassifierPipeline:
 
     # ── explainability ────────────────────────────────────────────────────────
 
+    def load_shap_background(self) -> np.ndarray:
+        """Load and featurize the bundled SHAP background dataset.
+
+        The background is a 200-molecule stratified sample of the training set
+        (28 molecules per pathway) stored as ``data/shap_background.csv`` inside
+        the package.  It is used as the default reference distribution when no
+        *background* argument is passed to :meth:`explain` or
+        :meth:`explain_bits`.
+
+        Returns
+        -------
+        Float32 array of shape ``(200, 6144)``.
+        """
+        bg_smiles = pd.read_csv(_SHAP_BG_CSV)["SMILES"].tolist()
+        return self.featurizer.transform(bg_smiles)
+
     def _resolve_background(
         self,
-        background: Union[Sequence[str], np.ndarray],
+        background: Optional[Union[Sequence[str], np.ndarray]],
     ) -> np.ndarray:
-        """Featurize a SMILES list or pass through a pre-computed array."""
+        """Featurize a SMILES list, pass through a pre-computed array, or load the bundled default."""
+        if background is None:
+            return self.load_shap_background()
         if isinstance(background, np.ndarray):
             return background.astype(np.float32)
         return self.featurizer.transform(list(background))
 
     def _make_shap(
         self,
-        background: Union[Sequence[str], np.ndarray],
+        background: Optional[Union[Sequence[str], np.ndarray]],
     ) -> NPClassifierEnsembleSHAP:
         from torch_np_classifier.explainability.ensemble_shap import (
             NPClassifierEnsembleSHAP,
@@ -596,7 +656,7 @@ class NPClassifierPipeline:
     def explain(
         self,
         smiles: str,
-        background: Union[Sequence[str], np.ndarray],
+        background: Optional[Union[Sequence[str], np.ndarray]] = None,
         k: int = 6,
         figsize: Optional[Tuple[float, float]] = None,
     ) -> matplotlib.figure.Figure:
@@ -614,7 +674,8 @@ class NPClassifierPipeline:
         background:
             Reference distribution for SHAP — a list of SMILES strings (will
             be featurized internally) or a pre-computed ``(N, 6144)`` float32
-            array.  A random sample of 50–200 training molecules is recommended.
+            array.  When ``None`` (default), the bundled 200-molecule stratified
+            background from :meth:`load_shap_background` is used automatically.
         k:
             Top-*k* bits to highlight per level.
         figsize:
@@ -632,7 +693,7 @@ class NPClassifierPipeline:
         self,
         smiles: str,
         level: str,
-        background: Union[Sequence[str], np.ndarray],
+        background: Optional[Union[Sequence[str], np.ndarray]] = None,
         k: int = 6,
     ) -> matplotlib.figure.Figure:
         """SHAP explanation figure for one hierarchy level.
@@ -649,6 +710,7 @@ class NPClassifierPipeline:
             ``"pathway"``, ``"superclass"``, or ``"class"``.
         background:
             Reference distribution for SHAP (SMILES list or feature array).
+            When ``None`` (default), uses the bundled background.
         k:
             Top-*k* bits to highlight.
 

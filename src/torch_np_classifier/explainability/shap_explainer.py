@@ -93,6 +93,7 @@ class NPClassifierSHAP:
 
         self._wrapper = _ClassSubsetWrapper(model.model, class_indices)
         self._wrapper.eval()
+        self._wrapper = self._wrapper.cpu()
 
         background = torch.tensor(np.asarray(background_features), dtype=torch.float32)
         self.explainer = shap.GradientExplainer(self._wrapper, background)
@@ -117,7 +118,7 @@ class NPClassifierSHAP:
         - Negative values → the feature pushes it **down**.
         - Axis 2 aligns with ``self.class_indices`` (or all classes if None).
         """
-        x = torch.tensor(np.asarray(features), dtype=torch.float32)
+        x = torch.tensor(np.asarray(features), dtype=torch.float32).cpu()
         raw = self.explainer.shap_values(x)
         # GradientExplainer returns list[array(n,f)] for multi-output,
         # or a single array(n,f) for single-output models/subsets.

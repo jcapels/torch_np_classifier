@@ -212,8 +212,8 @@ class NPClassifierEnsemble:
         class_labels: List[str],
         ontology: Union[str, Path, dict, None] = None,
         pathway_threshold: float = 0.6,
-        superclass_threshold: float = 0.6,
-        class_threshold: float = 0.6,
+        superclass_threshold: float = 0.5,
+        class_threshold: float = 0.1,
         featurizer: Optional[NPClassifierFeaturizer] = None,
         name_aliases: Optional[Dict[str, str]] = None,
     ) -> None:

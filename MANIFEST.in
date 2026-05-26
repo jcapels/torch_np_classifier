@@ -1,2 +1,3 @@
 include src/torch_np_classifier/data/label_names.pkl
 include src/torch_np_classifier/data/index_v1.json
+include src/torch_np_classifier/data/shap_background.csv
