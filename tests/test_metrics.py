@@ -61,9 +61,7 @@ class TestAveragePrecisionMacro:
 
     def test_perfect_score(self, perfect_labels):
         y_true, y_pred = perfect_labels
-        assert average_precision_macro(y_true, y_pred.astype(float)) == pytest.approx(
-            1.0
-        )
+        assert average_precision_macro(y_true, y_pred.astype(float)) == pytest.approx(1.0)
 
 
 class TestGroupMetrics:
@@ -77,12 +75,8 @@ class TestGroupMetrics:
     def test_average_precision_by_group(self, binary_labels):
         y_true, y_pred = binary_labels
         indexes = [3, 4, 5]
-        score_group = average_precision_macro_by_group(
-            y_true, y_pred.astype(float), indexes
-        )
-        score_direct = average_precision_macro(
-            y_true[:, indexes], y_pred[:, indexes].astype(float)
-        )
+        score_group = average_precision_macro_by_group(y_true, y_pred.astype(float), indexes)
+        score_direct = average_precision_macro(y_true[:, indexes], y_pred[:, indexes].astype(float))
         assert score_group == pytest.approx(score_direct)
 
 
@@ -114,12 +108,8 @@ class TestCosineSimilarityMeanSD:
     def test_by_group_matches_direct(self, binary_labels):
         y_true, y_pred = binary_labels
         indexes = [0, 1, 2]
-        g_mean, g_sd = cosine_similarity_mean_sd_by_group(
-            y_true.astype(float), y_pred.astype(float), indexes
-        )
-        d_mean, d_sd = cosine_similarity_mean_sd(
-            y_true[:, indexes].astype(float), y_pred[:, indexes].astype(float)
-        )
+        g_mean, g_sd = cosine_similarity_mean_sd_by_group(y_true.astype(float), y_pred.astype(float), indexes)
+        d_mean, d_sd = cosine_similarity_mean_sd(y_true[:, indexes].astype(float), y_pred[:, indexes].astype(float))
         assert g_mean == pytest.approx(d_mean)
         assert g_sd == pytest.approx(d_sd)
 
@@ -153,11 +143,7 @@ class TestMAPMeanSD:
     def test_by_group_matches_direct(self, binary_labels):
         y_true, y_pred = binary_labels
         indexes = [3, 4, 5]
-        g_mean, g_sd = map_mean_sd_by_group(
-            y_true.astype(float), y_pred.astype(float), indexes
-        )
-        d_mean, d_sd = map_mean_sd(
-            y_true[:, indexes].astype(float), y_pred[:, indexes].astype(float)
-        )
+        g_mean, g_sd = map_mean_sd_by_group(y_true.astype(float), y_pred.astype(float), indexes)
+        d_mean, d_sd = map_mean_sd(y_true[:, indexes].astype(float), y_pred[:, indexes].astype(float))
         assert g_mean == pytest.approx(d_mean)
         assert g_sd == pytest.approx(d_sd)

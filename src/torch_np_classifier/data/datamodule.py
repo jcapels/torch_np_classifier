@@ -73,9 +73,7 @@ class NPClassifierDataModule(lightning.LightningDataModule):
         self.label_slice = label_slice
         self.batch_size = batch_size
         self.num_workers = num_workers
-        self.featurizer = (
-            featurizer if featurizer is not None else NPClassifierFeaturizer()
-        )
+        self.featurizer = featurizer if featurizer is not None else NPClassifierFeaturizer()
 
         self._train_dataset: Optional[NPClassifierDataset] = None
         self._val_dataset: Optional[NPClassifierDataset] = None
@@ -122,9 +120,7 @@ class NPClassifierDataModule(lightning.LightningDataModule):
                 self._predict_dataset = self._load_dataset(self.predict_csv)
 
     def train_dataloader(self) -> DataLoader:
-        assert self._train_dataset is not None, (
-            "train_dataset is None — call setup('fit') first or provide train_csv."
-        )
+        assert self._train_dataset is not None, "train_dataset is None — call setup('fit') first or provide train_csv."
         return DataLoader(
             self._train_dataset,
             batch_size=self.batch_size,
@@ -133,9 +129,7 @@ class NPClassifierDataModule(lightning.LightningDataModule):
         )
 
     def val_dataloader(self) -> DataLoader:
-        assert self._val_dataset is not None, (
-            "val_dataset is None — call setup('fit') first or provide val_csv."
-        )
+        assert self._val_dataset is not None, "val_dataset is None — call setup('fit') first or provide val_csv."
         return DataLoader(
             self._val_dataset,
             batch_size=self.batch_size,
@@ -144,9 +138,7 @@ class NPClassifierDataModule(lightning.LightningDataModule):
         )
 
     def test_dataloader(self) -> DataLoader:
-        assert self._test_dataset is not None, (
-            "test_dataset is None — call setup('test') first or provide test_csv."
-        )
+        assert self._test_dataset is not None, "test_dataset is None — call setup('test') first or provide test_csv."
         return DataLoader(
             self._test_dataset,
             batch_size=self.batch_size,

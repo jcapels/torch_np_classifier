@@ -123,10 +123,7 @@ for level_name, path in ckpt_paths.items():
     m = NPClassifierLightning.load_from_checkpoint(path)
     m.eval()
     loaded_models[level_name] = m
-    print(
-        f"  {level_name}: loaded from {path}  "
-        f"(num_categories={m.hparams.num_categories})"
-    )
+    print(f"  {level_name}: loaded from {path}  (num_categories={m.hparams.num_categories})")
 
 # ---------------------------------------------------------------------------
 # 4. Predict on example molecules
@@ -157,9 +154,7 @@ for mol_idx, smi in enumerate(PREDICT_SMILES):
 
         # Labels above threshold
         positive = [
-            (level_label_names[i], probs_mol[i])
-            for i in np.argsort(probs_mol)[::-1]
-            if probs_mol[i] >= THRESHOLD
+            (level_label_names[i], probs_mol[i]) for i in np.argsort(probs_mol)[::-1] if probs_mol[i] >= THRESHOLD
         ][:3]
 
         if positive:

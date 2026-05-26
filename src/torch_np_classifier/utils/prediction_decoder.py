@@ -52,9 +52,7 @@ def decode_predictions(
         for level, sl in _LEVEL_SLICES.items():
             level_probs = row[sl]
             level_names = label_names[sl]
-            entry[level] = [
-                name for name, p in zip(level_names, level_probs) if p >= threshold
-            ]
+            entry[level] = [name for name, p in zip(level_names, level_probs) if p >= threshold]
         results.append(entry)
 
     return results[0] if single else results

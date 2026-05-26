@@ -68,9 +68,7 @@ class NPClassifierLightning(lightning.LightningModule):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.model([x])
 
-    def training_step(
-        self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
-    ) -> torch.Tensor:
+    def training_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
         x, y = batch
         logits = self.model([x])
         loss = BCELoss()(logits, y)
@@ -83,18 +81,14 @@ class NPClassifierLightning(lightning.LightningModule):
         )
         return loss
 
-    def validation_step(
-        self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
-    ) -> torch.Tensor:
+    def validation_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
         x, y = batch
         logits = self.model([x])
         loss = BCELoss()(logits, y)
         self.log("val_loss", loss, on_epoch=True, prog_bar=True)
         return loss
 
-    def test_step(
-        self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
-    ) -> Dict[str, torch.Tensor]:
+    def test_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> Dict[str, torch.Tensor]:
         x, y = batch
         logits = self.model([x])
         loss = BCELoss()(logits, y)

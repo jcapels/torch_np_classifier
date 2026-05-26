@@ -39,18 +39,14 @@ class NPClassifierDataset(Dataset):
     ) -> None:
         self.features = torch.as_tensor(features, dtype=torch.float32)
         if labels is not None:
-            self.labels: Optional[torch.Tensor] = torch.as_tensor(
-                labels, dtype=torch.float32
-            )
+            self.labels: Optional[torch.Tensor] = torch.as_tensor(labels, dtype=torch.float32)
         else:
             self.labels = None
 
     def __len__(self) -> int:
         return len(self.features)
 
-    def __getitem__(
-        self, idx: int
-    ) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
+    def __getitem__(self, idx: int) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
         if self.labels is not None:
             return self.features[idx], self.labels[idx]
         return self.features[idx]

@@ -223,9 +223,7 @@ class NPClassifierSHAP:
         -------
         SVG string or PIL ``Image``.
         """
-        top_indices = self.top_feature_indices(
-            shap_values_1d, k=k, positive_only=positive_only
-        )
+        top_indices = self.top_feature_indices(shap_values_1d, k=k, positive_only=positive_only)
         return featurizer.draw_bits(
             smiles,
             top_indices,
@@ -279,16 +277,12 @@ class NPClassifierSHAP:
         except ImportError as exc:
             raise ImportError("matplotlib is required: pip install matplotlib") from exc
 
-        top_indices = self.top_feature_indices(
-            shap_values_1d, k=k, positive_only=positive_only
-        )
+        top_indices = self.top_feature_indices(shap_values_1d, k=k, positive_only=positive_only)
         scores = np.asarray(shap_values_1d, dtype=float)
 
         fragments = []
         for rank, fp_idx in enumerate(top_indices):
-            img = featurizer.draw_bit_fragment(
-                smiles, fp_idx, size=fragment_size, as_svg=False
-            )
+            img = featurizer.draw_bit_fragment(smiles, fp_idx, size=fragment_size, as_svg=False)
             if img is not None:
                 env_r, bit = fp_index_to_radius_bit(fp_idx, featurizer.radius)
                 fragments.append(
@@ -395,17 +389,13 @@ class NPClassifierSHAP:
         except ImportError as exc:
             raise ImportError("matplotlib is required: pip install matplotlib") from exc
 
-        top_indices = self.top_feature_indices(
-            shap_values_1d, k=k, positive_only=positive_only
-        )
+        top_indices = self.top_feature_indices(shap_values_1d, k=k, positive_only=positive_only)
         scores = np.asarray(shap_values_1d, dtype=float)
 
         # Gather fragment images
         fragments = []
         for rank, fp_idx in enumerate(top_indices):
-            img = featurizer.draw_bit_fragment(
-                smiles, fp_idx, size=fragment_size, as_svg=False
-            )
+            img = featurizer.draw_bit_fragment(smiles, fp_idx, size=fragment_size, as_svg=False)
             if img is not None:
                 env_r, bit = fp_index_to_radius_bit(fp_idx, featurizer.radius)
                 fragments.append(
@@ -459,8 +449,7 @@ class NPClassifierSHAP:
         ax_bar = fig.add_subplot(gs[0, 1])
         if top_indices:
             bar_labels = [
-                f"r{fp_index_to_radius_bit(i, featurizer.radius)[0]}"
-                f"·b{fp_index_to_radius_bit(i, featurizer.radius)[1]}"
+                f"r{fp_index_to_radius_bit(i, featurizer.radius)[0]}·b{fp_index_to_radius_bit(i, featurizer.radius)[1]}"
                 for i in top_indices
             ]
             bar_vals = [scores[i] for i in top_indices]

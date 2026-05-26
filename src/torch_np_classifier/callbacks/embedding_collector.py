@@ -37,16 +37,12 @@ class EmbeddingCollector(lightning.Callback):
     # Lifecycle hooks
     # ------------------------------------------------------------------
 
-    def on_predict_start(
-        self, trainer: lightning.Trainer, pl_module: lightning.LightningModule
-    ) -> None:
+    def on_predict_start(self, trainer: lightning.Trainer, pl_module: lightning.LightningModule) -> None:
         pl_module.return_embedding = True
         self._embeddings = []
         self._predictions = []
 
-    def on_predict_end(
-        self, trainer: lightning.Trainer, pl_module: lightning.LightningModule
-    ) -> None:
+    def on_predict_end(self, trainer: lightning.Trainer, pl_module: lightning.LightningModule) -> None:
         pl_module.return_embedding = False
 
     def on_predict_batch_end(

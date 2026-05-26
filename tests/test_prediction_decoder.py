@@ -16,9 +16,7 @@ NUM_LABELS = 730
 
 @pytest.fixture(scope="session")
 def label_names():
-    ref = importlib.resources.files("torch_np_classifier.data").joinpath(
-        "label_names.pkl"
-    )
+    ref = importlib.resources.files("torch_np_classifier.data").joinpath("label_names.pkl")
     with importlib.resources.as_file(ref) as path:
         with open(path, "rb") as f:
             return pickle.load(f)

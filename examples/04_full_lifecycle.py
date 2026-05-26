@@ -112,9 +112,7 @@ print(f"Prediction shape: {predictions.shape}")
 
 for smi, prob in zip(predict_smiles, predictions):
     top = np.argsort(prob)[::-1][:5]
-    print(
-        f"  {smi[:45]:<45}  top-5 classes: {top.tolist()}  probs: {prob[top].round(3).tolist()}"
-    )
+    print(f"  {smi[:45]:<45}  top-5 classes: {top.tolist()}  probs: {prob[top].round(3).tolist()}")
 
 # ---------------------------------------------------------------------------
 # 7. Predict with embeddings

@@ -201,9 +201,7 @@ class TestDrawExplanation:
 
     def test_returns_svg_string(self, explainer_subset, sv_1d):
         feat = NPClassifierFeaturizer()
-        result = explainer_subset.draw_explanation(
-            "Cn1cnc2c1c(=O)n(c(=O)n2C)C", sv_1d, feat, as_svg=True
-        )
+        result = explainer_subset.draw_explanation("Cn1cnc2c1c(=O)n(c(=O)n2C)C", sv_1d, feat, as_svg=True)
         assert isinstance(result, str)
         assert result.startswith("<?xml")
 
@@ -211,15 +209,11 @@ class TestDrawExplanation:
         from PIL import Image
 
         feat = NPClassifierFeaturizer()
-        result = explainer_subset.draw_explanation(
-            "Cn1cnc2c1c(=O)n(c(=O)n2C)C", sv_1d, feat, as_svg=False
-        )
+        result = explainer_subset.draw_explanation("Cn1cnc2c1c(=O)n(c(=O)n2C)C", sv_1d, feat, as_svg=False)
         assert isinstance(result, Image.Image)
 
     def test_all_zero_shap_draws_without_error(self, explainer_subset):
         feat = NPClassifierFeaturizer()
         sv = np.zeros(INPUT_DIM)
-        result = explainer_subset.draw_explanation(
-            "Cn1cnc2c1c(=O)n(c(=O)n2C)C", sv, feat, as_svg=True
-        )
+        result = explainer_subset.draw_explanation("Cn1cnc2c1c(=O)n(c(=O)n2C)C", sv, feat, as_svg=True)
         assert isinstance(result, str)

@@ -141,11 +141,7 @@ class NPClassifierPipeline:
         # use n_jobs = half of available cores for featurization by default, but allow the user
         # Get half of available cores
         n_cores = os.cpu_count() // 2
-        self.featurizer = (
-            featurizer
-            if featurizer is not None
-            else NPClassifierFeaturizer(n_jobs=n_cores)
-        )
+        self.featurizer = featurizer if featurizer is not None else NPClassifierFeaturizer(n_jobs=n_cores)
 
         self._ensemble: Optional[NPClassifierEnsemble] = None
         self._label_names: Optional[List[str]] = None  # full 730-name list
@@ -357,9 +353,7 @@ class NPClassifierPipeline:
 
             callbacks = []
             if val_loader is not None and early_stopping:
-                callbacks.append(
-                    EarlyStopping(monitor="val_loss", patience=patience, mode="min")
-                )
+                callbacks.append(EarlyStopping(monitor="val_loss", patience=patience, mode="min"))
 
             ckpt_cb: Optional[ModelCheckpoint] = None
             if checkpoint_dir is not None:
@@ -394,9 +388,7 @@ class NPClassifierPipeline:
 
             # Reload best checkpoint when available
             if ckpt_cb is not None and ckpt_cb.best_model_path:
-                model = NPClassifierLightning.load_from_checkpoint(
-                    ckpt_cb.best_model_path
-                )
+                model = NPClassifierLightning.load_from_checkpoint(ckpt_cb.best_model_path)
 
             model.eval()
             trained_models[level_name] = model
@@ -406,9 +398,7 @@ class NPClassifierPipeline:
             superclass_model=trained_models["superclass"],
             class_model=trained_models["class"],
             pathway_labels=self._label_names[:_N_PATHWAY],
-            superclass_labels=self._label_names[
-                _N_PATHWAY : _N_PATHWAY + _N_SUPERCLASS
-            ],
+            superclass_labels=self._label_names[_N_PATHWAY : _N_PATHWAY + _N_SUPERCLASS],
             class_labels=self._label_names[_N_PATHWAY + _N_SUPERCLASS :],
             pathway_threshold=self.pathway_threshold,
             superclass_threshold=self.superclass_threshold,
@@ -437,9 +427,7 @@ class NPClassifierPipeline:
         else:
             smiles_list = list(smiles_or_csv)
             if labels is None:
-                raise ValueError(
-                    "labels must be provided when smiles_or_csv is a list of SMILES."
-                )
+                raise ValueError("labels must be provided when smiles_or_csv is a list of SMILES.")
             lbl = np.asarray(labels, dtype=np.float32)
             if label_names is not None:
                 names = list(label_names)
@@ -454,10 +442,7 @@ class NPClassifierPipeline:
 
     def _check_fitted(self) -> None:
         if self._ensemble is None:
-            raise RuntimeError(
-                "Pipeline is not fitted yet. "
-                "Call fit() or use NPClassifierPipeline.from_checkpoints()."
-            )
+            raise RuntimeError("Pipeline is not fitted yet. Call fit() or use NPClassifierPipeline.from_checkpoints().")
 
     def predict(
         self,
@@ -589,17 +574,13 @@ class NPClassifierPipeline:
         """
         self._check_fitted()
         if level not in _LEVEL_SLICES:
-            raise ValueError(
-                f"level must be one of {list(_LEVEL_SLICES)}, got {level!r}"
-            )
+            raise ValueError(f"level must be one of {list(_LEVEL_SLICES)}, got {level!r}")
 
         smiles_list = [smiles] if isinstance(smiles, str) else list(smiles)
         model = getattr(self._ensemble, f"{level}_model")
         features = self.featurizer.transform(smiles_list)
         dataset = NPClassifierDataset(features)
-        loader = DataLoader(
-            dataset, batch_size=batch_size, shuffle=False, num_workers=0
-        )
+        loader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=0)
 
         collector = EmbeddingCollector()
         trainer = lightning.Trainer(
@@ -685,9 +666,7 @@ class NPClassifierPipeline:
         -------
         matplotlib Figure.
         """
-        return self._make_shap(background).explanation_figure(
-            smiles, self.featurizer, k=k, figsize=figsize
-        )
+        return self._make_shap(background).explanation_figure(smiles, self.featurizer, k=k, figsize=figsize)
 
     def explain_bits(
         self,
@@ -718,6 +697,4 @@ class NPClassifierPipeline:
         -------
         matplotlib Figure.
         """
-        return self._make_shap(background).draw_level(
-            smiles, level, self.featurizer, k=k
-        )
+        return self._make_shap(background).draw_level(smiles, level, self.featurizer, k=k)

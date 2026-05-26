@@ -57,10 +57,7 @@ dm = NPClassifierDataModule(
 )
 dm.setup("fit")
 num_categories = dm._train_dataset.labels.shape[1]
-print(
-    f"Categories: {num_categories}  "
-    f"(pathway=7, superclass=70, class={num_categories - 77})"
-)
+print(f"Categories: {num_categories}  (pathway=7, superclass=70, class={num_categories - 77})")
 
 # ---------------------------------------------------------------------------
 # Model
@@ -128,16 +125,11 @@ preds = (probs >= THRESHOLD).astype(np.int32)
 # ---------------------------------------------------------------------------
 # Metrics per level
 # ---------------------------------------------------------------------------
-def report_metrics(
-    name: str, y_true: np.ndarray, y_prob: np.ndarray, y_pred: np.ndarray
-) -> None:
+def report_metrics(name: str, y_true: np.ndarray, y_prob: np.ndarray, y_pred: np.ndarray) -> None:
     macro_f1 = f1_score(y_true, y_pred, average="macro", zero_division=0)
     micro_f1 = f1_score(y_true, y_pred, average="micro", zero_division=0)
     map_mean, map_sd = map_mean_sd(y_true, y_prob)
-    print(
-        f"  {name:<25}  macro F1 = {macro_f1:.4f}   micro F1 = {micro_f1:.4f}"
-        f"   MAP = {map_mean:.4f} ± {map_sd:.4f}"
-    )
+    print(f"  {name:<25}  macro F1 = {macro_f1:.4f}   micro F1 = {micro_f1:.4f}   MAP = {map_mean:.4f} ± {map_sd:.4f}")
 
 
 print("\n=== Test Scores ===")

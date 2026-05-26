@@ -45,9 +45,7 @@ _ONTOLOGY_PATH = _DATA_DIR / "index_v1.json"
 _LABEL_PKL = _DATA_DIR / "label_names.pkl"
 
 # ── pretrained model download ────────────────────────────────────────────────
-_PRETRAINED_URL = (
-    "https://zenodo.org/records/20398261/files/np_classifier_models.zip?download=1"
-)
+_PRETRAINED_URL = "https://zenodo.org/records/20398261/files/np_classifier_models.zip?download=1"
 _PRETRAINED_CACHE_DIR = Path.home() / ".cache" / "torch_np_classifier"
 _PRETRAINED_CKPTS = {
     "pathway": "pathway_np_classifier.ckpt",
@@ -143,11 +141,7 @@ def _is_glycoside(mol) -> bool:
         hexa = Chem.MolFromSmarts(_HEXA_PYRANOSE)
         deoxy = Chem.MolFromSmarts(_HEXA_DEOXY)
         penta = Chem.MolFromSmarts(_PENTA_FURANOSE)
-        return (
-            mol.HasSubstructMatch(hexa)
-            or mol.HasSubstructMatch(deoxy)
-            or mol.HasSubstructMatch(penta)
-        )
+        return mol.HasSubstructMatch(hexa) or mol.HasSubstructMatch(deoxy) or mol.HasSubstructMatch(penta)
     except Exception:
         return False
 
@@ -231,9 +225,7 @@ class NPClassifierEnsemble:
         self.superclass_threshold = superclass_threshold
         self.class_threshold = class_threshold
 
-        self.featurizer = (
-            featurizer if featurizer is not None else NPClassifierFeaturizer()
-        )
+        self.featurizer = featurizer if featurizer is not None else NPClassifierFeaturizer()
 
         # Merge aliases
         aliases: Dict[str, str] = dict(_DEFAULT_ALIASES)
@@ -319,16 +311,10 @@ class NPClassifierEnsemble:
             Forwarded to :class:`NPClassifierEnsemble`.
         """
         pathway_model = NPClassifierLightning.load_from_checkpoint(str(pathway_ckpt))
-        superclass_model = NPClassifierLightning.load_from_checkpoint(
-            str(superclass_ckpt)
-        )
+        superclass_model = NPClassifierLightning.load_from_checkpoint(str(superclass_ckpt))
         class_model = NPClassifierLightning.load_from_checkpoint(str(class_ckpt))
 
-        if (
-            pathway_labels is not None
-            and superclass_labels is not None
-            and class_labels is not None
-        ):
+        if pathway_labels is not None and superclass_labels is not None and class_labels is not None:
             return cls(
                 pathway_model,
                 superclass_model,
@@ -376,12 +362,8 @@ class NPClassifierEnsemble:
         missing = [p for p in ckpt_paths.values() if not p.exists()]
 
         if missing or force_download:
-            logging.getLogger(__name__).info(
-                "Downloading pretrained NP-Classifier models from Zenodo …"
-            )
-            _download_and_extract(
-                _PRETRAINED_URL, cache, set(_PRETRAINED_CKPTS.values())
-            )
+            logging.getLogger(__name__).info("Downloading pretrained NP-Classifier models from Zenodo …")
+            _download_and_extract(_PRETRAINED_URL, cache, set(_PRETRAINED_CKPTS.values()))
 
         return cls.from_checkpoints(
             pathway_ckpt=ckpt_paths["pathway"],
@@ -485,9 +467,7 @@ class NPClassifierEnsemble:
     def _get_device() -> torch.device:
         return torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    def _run_model_torch(
-        self, model: NPClassifierLightning, loader: DataLoader
-    ) -> np.ndarray:
+    def _run_model_torch(self, model: NPClassifierLightning, loader: DataLoader) -> np.ndarray:
         device = self._get_device()
         model = model.to(device)
         model.eval()
@@ -497,15 +477,11 @@ class NPClassifierEnsemble:
                 batches.append(model(batch.to(device)))
         return torch.cat(batches, dim=0).cpu().numpy()
 
-    def _run_model_lightning(
-        self, model: NPClassifierLightning, loader: DataLoader
-    ) -> np.ndarray:
+    def _run_model_lightning(self, model: NPClassifierLightning, loader: DataLoader) -> np.ndarray:
         batches = self._trainer.predict(model, loader)
         return torch.cat(batches, dim=0).cpu().numpy()
 
-    def _run_model(
-        self, model: NPClassifierLightning, loader: DataLoader, n_samples: int
-    ) -> np.ndarray:
+    def _run_model(self, model: NPClassifierLightning, loader: DataLoader, n_samples: int) -> np.ndarray:
         if n_samples >= 10_000:
             return self._run_model_lightning(model, loader)
         return self._run_model_torch(model, loader)
@@ -551,8 +527,7 @@ class NPClassifierEnsemble:
 
         if check_glycoside and mols is not None:
             glycoside_flags = Parallel(n_jobs=self.featurizer.n_jobs)(
-                delayed(_is_glycoside)(mol)
-                for mol in tqdm(mols, desc="Checking glycosides")
+                delayed(_is_glycoside)(mol) for mol in tqdm(mols, desc="Checking glycosides")
             )
         else:
             glycoside_flags = [False] * len(features)
@@ -599,9 +574,7 @@ class NPClassifierEnsemble:
         smiles_list = [smiles] if single else list(smiles)
 
         features, mols = self.featurizer.transform_with_mols(smiles_list)
-        results = self.predict_from_features(
-            features, mols, check_glycoside=check_glycoside
-        )
+        results = self.predict_from_features(features, mols, check_glycoside=check_glycoside)
         return results[0] if single else results
 
     # ── voting ───────────────────────────────────────────────────────────────
@@ -621,12 +594,8 @@ class NPClassifierEnsemble:
         ``"isglycoside"`` keys.
         """
         # Pathway votes derived from each model level
-        path_from_class = list(
-            set(p for c in n_class for p in self._class_to_pathways.get(c, []))
-        )
-        path_from_superclass = list(
-            set(p for s in n_super for p in self._super_to_pathways.get(s, []))
-        )
+        path_from_class = list(set(p for c in n_class for p in self._class_to_pathways.get(c, [])))
+        path_from_superclass = list(set(p for s in n_super for p in self._super_to_pathways.get(s, [])))
 
         # --- Step 1: find agreed pathways ---
         path_for_vote = n_path + path_from_class + path_from_superclass
@@ -638,9 +607,7 @@ class NPClassifierEnsemble:
                 # drop class votes and retry
                 path_for_vote = n_path + path_from_superclass
                 n_class = []
-                path = list(
-                    set(k for k in path_for_vote if path_for_vote.count(k) == 2)
-                )
+                path = list(set(k for k in path_for_vote if path_for_vote.count(k) == 2))
 
         # No pathway agreement → return pathway-only prediction
         if not path:
@@ -656,148 +623,63 @@ class NPClassifierEnsemble:
             # pathway model agrees
             if set(path) & set(path_from_superclass):
                 # superclass-derived pathway agrees
-                n_super = [
-                    s
-                    for s in n_super
-                    if set(path) & set(self._super_to_pathways.get(s, []))
-                ]
+                n_super = [s for s in n_super if set(path) & set(self._super_to_pathways.get(s, []))]
                 if not n_super:
-                    n_class = [
-                        m
-                        for m in n_class
-                        if set(path) & set(self._class_to_pathways.get(m, []))
-                    ]
+                    n_class = [m for m in n_class if set(path) & set(self._class_to_pathways.get(m, []))]
                     n_super = list(
-                        set(
-                            itertools.chain.from_iterable(
-                                self._class_to_superclasses.get(c, []) for c in n_class
-                            )
-                        )
+                        set(itertools.chain.from_iterable(self._class_to_superclasses.get(c, []) for c in n_class))
                     )
                 elif len(n_super) > 1:
-                    n_class = [
-                        u
-                        for u in n_class
-                        if set(path) & set(self._class_to_pathways.get(u, []))
-                    ]
+                    n_class = [u for u in n_class if set(path) & set(self._class_to_pathways.get(u, []))]
                     if n_class:
                         n_super = list(
-                            set(
-                                itertools.chain.from_iterable(
-                                    self._class_to_superclasses.get(c, [])
-                                    for c in n_class
-                                )
-                            )
+                            set(itertools.chain.from_iterable(self._class_to_superclasses.get(c, []) for c in n_class))
                         )
                         n_path = list(
-                            set(
-                                itertools.chain.from_iterable(
-                                    self._class_to_pathways.get(c, []) for c in n_class
-                                )
-                            )
+                            set(itertools.chain.from_iterable(self._class_to_pathways.get(c, []) for c in n_class))
                         )
                     elif len(path) == 1:
                         n_super = [int(np.argmax(pred_super))]
                         n_class = [
                             m
                             for m in [int(np.argmax(pred_class))]
-                            if set(n_super)
-                            & set(self._class_to_superclasses.get(m, []))
+                            if set(n_super) & set(self._class_to_superclasses.get(m, []))
                         ]
                 else:
-                    n_class = [
-                        o
-                        for o in n_class
-                        if set(n_super) & set(self._class_to_superclasses.get(o, []))
-                    ]
+                    n_class = [o for o in n_class if set(n_super) & set(self._class_to_superclasses.get(o, []))]
                     if not n_class:
                         n_class = [
                             m
                             for m in [int(np.argmax(pred_class))]
-                            if set(n_super)
-                            & set(self._class_to_superclasses.get(m, []))
+                            if set(n_super) & set(self._class_to_superclasses.get(m, []))
                         ]
             else:
                 # class-derived pathway agrees but superclass does not
-                n_class = [
-                    p
-                    for p in n_class
-                    if set(path) & set(self._class_to_pathways.get(p, []))
-                ]
+                n_class = [p for p in n_class if set(path) & set(self._class_to_pathways.get(p, []))]
                 n_super = list(
-                    set(
-                        itertools.chain.from_iterable(
-                            self._class_to_superclasses.get(c, []) for c in n_class
-                        )
-                    )
+                    set(itertools.chain.from_iterable(self._class_to_superclasses.get(c, []) for c in n_class))
                 )
         else:
             # pathway model does not agree — trust class/superclass
-            n_super = [
-                s
-                for s in n_super
-                if set(path) & set(self._super_to_pathways.get(s, []))
-            ]
+            n_super = [s for s in n_super if set(path) & set(self._super_to_pathways.get(s, []))]
             if not n_super:
-                n_class = [
-                    m
-                    for m in n_class
-                    if set(path) & set(self._class_to_pathways.get(m, []))
-                ]
+                n_class = [m for m in n_class if set(path) & set(self._class_to_pathways.get(m, []))]
                 n_super = list(
-                    set(
-                        itertools.chain.from_iterable(
-                            self._class_to_superclasses.get(c, []) for c in n_class
-                        )
-                    )
+                    set(itertools.chain.from_iterable(self._class_to_superclasses.get(c, []) for c in n_class))
                 )
-                n_path = list(
-                    set(
-                        itertools.chain.from_iterable(
-                            self._class_to_pathways.get(c, []) for c in n_class
-                        )
-                    )
-                )
+                n_path = list(set(itertools.chain.from_iterable(self._class_to_pathways.get(c, []) for c in n_class)))
             elif len(n_super) > 1:
-                n_class = [
-                    u
-                    for u in n_class
-                    if set(path) & set(self._class_to_pathways.get(u, []))
-                ]
+                n_class = [u for u in n_class if set(path) & set(self._class_to_pathways.get(u, []))]
                 n_super = list(
-                    set(
-                        itertools.chain.from_iterable(
-                            self._class_to_superclasses.get(c, []) for c in n_class
-                        )
-                    )
+                    set(itertools.chain.from_iterable(self._class_to_superclasses.get(c, []) for c in n_class))
                 )
-                n_path = list(
-                    set(
-                        itertools.chain.from_iterable(
-                            self._class_to_pathways.get(c, []) for c in n_class
-                        )
-                    )
-                )
+                n_path = list(set(itertools.chain.from_iterable(self._class_to_pathways.get(c, []) for c in n_class)))
             else:
-                n_class = [
-                    o
-                    for o in n_class
-                    if set(path) & set(self._class_to_pathways.get(o, []))
-                ]
+                n_class = [o for o in n_class if set(path) & set(self._class_to_pathways.get(o, []))]
                 n_super = list(
-                    set(
-                        itertools.chain.from_iterable(
-                            self._class_to_superclasses.get(c, []) for c in n_class
-                        )
-                    )
+                    set(itertools.chain.from_iterable(self._class_to_superclasses.get(c, []) for c in n_class))
                 )
-                n_path = list(
-                    set(
-                        itertools.chain.from_iterable(
-                            self._class_to_pathways.get(c, []) for c in n_class
-                        )
-                    )
-                )
+                n_path = list(set(itertools.chain.from_iterable(self._class_to_pathways.get(c, []) for c in n_class)))
 
         if not n_super:
             n_super = [int(np.argmax(pred_super))]

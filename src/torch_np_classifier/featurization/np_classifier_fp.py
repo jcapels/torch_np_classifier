@@ -121,9 +121,7 @@ def _compute_fp(
                 formula[bit] = len([k for k in mol_bi[bit] if k[1] == 0])
         else:
             for bit in active_bits_at_r:
-                binary[2048 * (r - 1) + bit] = len(
-                    [k for k in mol_bi[bit] if k[1] == r]
-                )
+                binary[2048 * (r - 1) + bit] = len([k for k in mol_bi[bit] if k[1] == r])
 
     fp = np.concatenate((binary, formula), dtype=np.float32)
     if return_bit_info:
@@ -185,9 +183,7 @@ def _featurize_smiles_with_mol(
     return fp, mol
 
 
-def _environment_atoms_and_bonds(
-    mol: Chem.Mol, atom_idx: int, env_radius: int
-) -> Tuple[List[int], List[int]]:
+def _environment_atoms_and_bonds(mol: Chem.Mol, atom_idx: int, env_radius: int) -> Tuple[List[int], List[int]]:
     """Return all atom and bond indices in the Morgan environment of *atom_idx*."""
     if env_radius == 0:
         return [atom_idx], []
@@ -313,9 +309,7 @@ class NPClassifierFeaturizer:
 
         results = Parallel(n_jobs=self.n_jobs)(
             delayed(featurize_smiles)(smi, self.radius, self.use_chirality)
-            for smi in tqdm(
-                smiles_list, total=len(smiles_list), desc="Featurizing SMILES"
-            )
+            for smi in tqdm(smiles_list, total=len(smiles_list), desc="Featurizing SMILES")
         )
 
         out = np.zeros((len(smiles_list), self.feature_dim), dtype=np.float32)
@@ -324,9 +318,7 @@ class NPClassifierFeaturizer:
                 out[i] = fp
         return out
 
-    def transform_with_mols(
-        self, smiles_list: List[str]
-    ) -> Tuple[np.ndarray, List[Optional["Chem.Mol"]]]:
+    def transform_with_mols(self, smiles_list: List[str]) -> Tuple[np.ndarray, List[Optional["Chem.Mol"]]]:
         """Featurize *smiles_list* and return the parsed Mol objects alongside features.
 
         Avoids re-parsing SMILES when the Mol is needed downstream (e.g. for
@@ -341,9 +333,7 @@ class NPClassifierFeaturizer:
 
         results = Parallel(n_jobs=self.n_jobs)(
             delayed(_featurize_smiles_with_mol)(smi, self.radius, self.use_chirality)
-            for smi in tqdm(
-                smiles_list, total=len(smiles_list), desc="Featurizing SMILES"
-            )
+            for smi in tqdm(smiles_list, total=len(smiles_list), desc="Featurizing SMILES")
         )
 
         out = np.zeros((len(smiles_list), self.feature_dim), dtype=np.float32)
@@ -374,9 +364,7 @@ class NPClassifierFeaturizer:
         -------
         BitInfoMap — empty dict if the SMILES cannot be parsed.
         """
-        _, bit_info = featurize_smiles(
-            smiles, self.radius, self.use_chirality, return_bit_info=True
-        )
+        _, bit_info = featurize_smiles(smiles, self.radius, self.use_chirality, return_bit_info=True)
         return bit_info
 
     def get_highlighted_atoms(
@@ -469,9 +457,7 @@ class NPClassifierFeaturizer:
         bit_info = self.get_bit_info(smiles)
 
         if not per_feature_colors:
-            highlight_atoms, highlight_bonds = self.get_highlighted_atoms(
-                mol, bit_info, feature_indices
-            )
+            highlight_atoms, highlight_bonds = self.get_highlighted_atoms(mol, bit_info, feature_indices)
             atom_colors: Dict[int, Tuple] = {a: _COLORS[0] for a in highlight_atoms}
             bond_colors: Dict[int, Tuple] = {b: _COLORS[0] for b in highlight_bonds}
         else:
@@ -487,9 +473,7 @@ class NPClassifierFeaturizer:
                 for atom_idx, info_radius in bit_info[morgan_bit]:
                     if info_radius != env_radius:
                         continue
-                    atoms, bonds = _environment_atoms_and_bonds(
-                        mol, atom_idx, env_radius
-                    )
+                    atoms, bonds = _environment_atoms_and_bonds(mol, atom_idx, env_radius)
                     for a in atoms:
                         highlight_atoms_set.add(a)
                         atom_colors.setdefault(a, color)

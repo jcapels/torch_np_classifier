@@ -41,9 +41,7 @@ parser.add_argument(
     default="coconut_csv-05-2026.csv",
     help="path to COCONUT CSV (default: coconut_csv-05-2026.csv)",
 )
-parser.add_argument(
-    "--output", default=None, help="optional path to save per-molecule results CSV"
-)
+parser.add_argument("--output", default=None, help="optional path to save per-molecule results CSV")
 parser.add_argument("--pathway-threshold", type=float, default=0.5)
 parser.add_argument("--superclass-threshold", type=float, default=0.3)
 parser.add_argument("--class-threshold", type=float, default=0.1)
@@ -171,14 +169,8 @@ def evaluate_level(gt_series: pd.Series, pred_series: pd.Series, level: str):
         f"  hit_rate       : {metrics['hit_rate']:.4f}  "
         f"({hits:,}/{total:,} — true label in predicted set, or both empty)"
     )
-    print(
-        f"  mean_precision : {metrics['mean_precision']:.4f}  "
-        f"(avg fraction of predicted labels that are correct)"
-    )
-    print(
-        f"  empty_rate     : {metrics['empty_rate']:.4f}  "
-        f"({empty:,} molecules with no prediction)"
-    )
+    print(f"  mean_precision : {metrics['mean_precision']:.4f}  (avg fraction of predicted labels that are correct)")
+    print(f"  empty_rate     : {metrics['empty_rate']:.4f}  ({empty:,} molecules with no prediction)")
     return metrics
 
 

@@ -49,10 +49,8 @@ MOLECULES = {
     "caffeine": "Cn1cnc2c1c(=O)n(c(=O)n2C)C",
     "quercetin": "O=c1c(O)c(-c2ccc(O)c(O)c2)oc2cc(O)cc(O)c12",
     "morphine": "CN1CC[C@]23c4c5ccc(O)c4O[C@H]2[C@@H](O)C=C[C@@H]3[C@@H]1C5",
-    "cholesterol": "[C@@H]1(CC[C@@H]2[C@@]1(CC[C@H]3[C@H]2CC=C4[C@@]3(CC[C@@H](C4)O)C)"
-    "[C@H](CCCC(C)C)C)C",
-    "sucrose": "OC[C@H]1O[C@@](CO)(O[C@H]2O[C@@H](CO)[C@@H](O)[C@H](O)[C@H]2O)"
-    "[C@@H](O)[C@@H]1O",
+    "cholesterol": "[C@@H]1(CC[C@@H]2[C@@]1(CC[C@H]3[C@H]2CC=C4[C@@]3(CC[C@@H](C4)O)C)[C@H](CCCC(C)C)C)C",
+    "sucrose": "OC[C@H]1O[C@@](CO)(O[C@H]2O[C@@H](CO)[C@@H](O)[C@H](O)[C@H]2O)[C@@H](O)[C@@H]1O",
 }
 
 results = ensemble.predict(list(MOLECULES.values()), check_glycoside=True)

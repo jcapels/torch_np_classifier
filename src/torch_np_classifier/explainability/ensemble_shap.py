@@ -96,9 +96,7 @@ class NPClassifierEnsembleSHAP:
         attrs = _level_attrs(self.ensemble)
         model, label_list = attrs[level]
 
-        indices = [
-            label_list.index(lbl) for lbl in predicted_labels if lbl in label_list
-        ]
+        indices = [label_list.index(lbl) for lbl in predicted_labels if lbl in label_list]
         if not indices:
             warnings.warn(
                 f"None of the predicted {level} labels {predicted_labels!r} "
@@ -151,9 +149,7 @@ class NPClassifierEnsembleSHAP:
 
         result: Dict = {"prediction": prediction, "features": features}
         for level in _LEVELS:
-            result[level] = self._build_level_explainer(
-                level, features, prediction[level]
-            )
+            result[level] = self._build_level_explainer(level, features, prediction[level])
         return result
 
     # ── drawing: one level ───────────────────────────────────────────────────
@@ -192,9 +188,7 @@ class NPClassifierEnsembleSHAP:
         try:
             import matplotlib.pyplot as plt
         except ImportError as exc:
-            raise ImportError(
-                "matplotlib and Pillow are required: pip install matplotlib Pillow"
-            ) from exc
+            raise ImportError("matplotlib and Pillow are required: pip install matplotlib Pillow") from exc
 
         exp = self.explain_smiles(smiles, featurizer)
         level_data = exp[level]
@@ -261,9 +255,7 @@ class NPClassifierEnsembleSHAP:
         try:
             import matplotlib.pyplot as plt
         except ImportError as exc:
-            raise ImportError(
-                "matplotlib and Pillow are required: pip install matplotlib Pillow"
-            ) from exc
+            raise ImportError("matplotlib and Pillow are required: pip install matplotlib Pillow") from exc
 
         exp = self.explain_smiles(smiles, featurizer)
         pred = exp["prediction"]

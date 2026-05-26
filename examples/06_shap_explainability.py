@@ -113,9 +113,7 @@ else:
 # 4. Build SHAP background fingerprints
 # ---------------------------------------------------------------------------
 if args.background_csv:
-    print(
-        f"\nSampling {args.n_background} background molecules from {args.background_csv} …"
-    )
+    print(f"\nSampling {args.n_background} background molecules from {args.background_csv} …")
     df_bg = pd.read_csv(args.background_csv)
     bg_smiles_all = df_bg[args.smiles_col].dropna().tolist()
     rng = np.random.default_rng(42)
@@ -128,9 +126,7 @@ if args.background_csv:
 else:
     print("\nNo --background-csv provided — using random background (less accurate).")
     rng = np.random.default_rng(42)
-    bg_features = rng.random((args.n_background, featurizer.feature_dim)).astype(
-        np.float32
-    )
+    bg_features = rng.random((args.n_background, featurizer.feature_dim)).astype(np.float32)
 
 # ---------------------------------------------------------------------------
 # 5. SHAP explanation per molecule
@@ -140,13 +136,8 @@ os.makedirs(args.outdir, exist_ok=True)
 print("\n=== Generating SHAP explanations ===")
 for mol_name, smi, prob in zip(names_list, smiles_list, probs):
     top_class = int(np.argmax(prob))
-    class_label = (
-        str(label_names[top_class]) if label_names is not None else f"class_{top_class}"
-    )
-    print(
-        f"\n{mol_name}: top class = {class_label!r}  "
-        f"(idx={top_class}, p={prob[top_class]:.3f})"
-    )
+    class_label = str(label_names[top_class]) if label_names is not None else f"class_{top_class}"
+    print(f"\n{mol_name}: top class = {class_label!r}  (idx={top_class}, p={prob[top_class]:.3f})")
 
     explainer = NPClassifierSHAP(model, bg_features, class_indices=[top_class])
     sv = explainer.explain_smiles(smi, featurizer)  # (1, 6144, 1)

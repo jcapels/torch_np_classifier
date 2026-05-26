@@ -29,9 +29,7 @@ def cosine_similarity_mean_sd(y_true, y_pred):
     y_pred = np.asarray(y_pred, dtype=float)
     scores = np.array(
         [
-            float(_cosine_similarity(t.reshape(1, -1), p.reshape(1, -1))[0, 0])
-            if np.any(t) and np.any(p)
-            else 0.0
+            float(_cosine_similarity(t.reshape(1, -1), p.reshape(1, -1))[0, 0]) if np.any(t) and np.any(p) else 0.0
             for t, p in zip(y_true, y_pred)
         ]
     )
