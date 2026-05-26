@@ -38,23 +38,23 @@ from torch_np_classifier.utils.metrics import map_mean_sd
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
-TRAIN_CSV  = "train_dataset.csv"
-VAL_CSV    = "validation_dataset.csv"
-TEST_CSV   = "test_dataset.csv"
+TRAIN_CSV = "train_dataset.csv"
+VAL_CSV = "validation_dataset.csv"
+TEST_CSV = "test_dataset.csv"
 SMILES_COL = "SMILES"
-LABEL_START = 2   # CSV columns to skip: 'key' and 'SMILES'
+LABEL_START = 2  # CSV columns to skip: 'key' and 'SMILES'
 
-BATCH_SIZE  = 128
-MAX_EPOCHS  = 150
-LR          = 1e-5
-CKPT_DIR    = "checkpoints/hierarchical/"
-THRESHOLD   = 0.5
+BATCH_SIZE = 128
+MAX_EPOCHS = 150
+LR = 1e-5
+CKPT_DIR = "checkpoints/hierarchical/"
+THRESHOLD = 0.5
 
 # Slices into the 730-dim label array (0-indexed from first label column)
 LEVELS: Dict[str, Tuple[slice, int]] = {
-    "pathway":    (slice(None, 7),   7),
-    "superclass": (slice(7, 77),    70),
-    "class":      (slice(77, None), None),  # None → inferred from data
+    "pathway": (slice(None, 7), 7),
+    "superclass": (slice(7, 77), 70),
+    "class": (slice(77, None), None),  # None → inferred from data
 }
 
 # ---------------------------------------------------------------------------
@@ -62,22 +62,24 @@ LEVELS: Dict[str, Tuple[slice, int]] = {
 # ---------------------------------------------------------------------------
 print("Loading CSVs …")
 train_df = pd.read_csv(TRAIN_CSV)
-val_df   = pd.read_csv(VAL_CSV)
-test_df  = pd.read_csv(TEST_CSV)
+val_df = pd.read_csv(VAL_CSV)
+test_df = pd.read_csv(TEST_CSV)
 
 label_cols = train_df.columns[LABEL_START:].tolist()
 print(f"  Total label columns: {len(label_cols)}")
 
 print("Featurizing SMILES …")
-featurizer    = NPClassifierFeaturizer(radius=2, n_jobs=-1)
+featurizer = NPClassifierFeaturizer(radius=2, n_jobs=-1)
 train_features = featurizer.transform(train_df[SMILES_COL].tolist())
-val_features   = featurizer.transform(val_df[SMILES_COL].tolist())
-test_features  = featurizer.transform(test_df[SMILES_COL].tolist())
-print(f"  train={train_features.shape}, val={val_features.shape}, test={test_features.shape}")
+val_features = featurizer.transform(val_df[SMILES_COL].tolist())
+test_features = featurizer.transform(test_df[SMILES_COL].tolist())
+print(
+    f"  train={train_features.shape}, val={val_features.shape}, test={test_features.shape}"
+)
 
 train_labels_all = train_df[label_cols].values.astype(np.float32)
-val_labels_all   = val_df[label_cols].values.astype(np.float32)
-test_labels_all  = test_df[label_cols].values.astype(np.float32)
+val_labels_all = val_df[label_cols].values.astype(np.float32)
+test_labels_all = test_df[label_cols].values.astype(np.float32)
 
 # ---------------------------------------------------------------------------
 # 2. Train one model per level
@@ -85,19 +87,23 @@ test_labels_all  = test_df[label_cols].values.astype(np.float32)
 best_ckpt_paths: Dict[str, str] = {}
 
 for level_name, (label_sl, num_cats_hint) in LEVELS.items():
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     train_labels = train_labels_all[:, label_sl]
-    val_labels   = val_labels_all[:, label_sl]
-    num_cats     = train_labels.shape[1]
+    val_labels = val_labels_all[:, label_sl]
+    num_cats = train_labels.shape[1]
     print(f"Level: {level_name!r}   num_categories={num_cats}")
 
     train_loader = DataLoader(
         NPClassifierDataset(train_features, train_labels),
-        batch_size=BATCH_SIZE, shuffle=True,  num_workers=4,
+        batch_size=BATCH_SIZE,
+        shuffle=True,
+        num_workers=4,
     )
     val_loader = DataLoader(
         NPClassifierDataset(val_features, val_labels),
-        batch_size=BATCH_SIZE, shuffle=False, num_workers=4,
+        batch_size=BATCH_SIZE,
+        shuffle=False,
+        num_workers=4,
     )
 
     model = NPClassifierLightning(num_categories=num_cats, lr=LR, scheduler=True)
@@ -131,7 +137,9 @@ for level_name, (label_sl, num_cats_hint) in LEVELS.items():
 print("\n\n=== Test Evaluation ===")
 
 
-def report_metrics(name: str, y_true: np.ndarray, y_prob: np.ndarray, y_pred: np.ndarray) -> None:
+def report_metrics(
+    name: str, y_true: np.ndarray, y_prob: np.ndarray, y_pred: np.ndarray
+) -> None:
     macro_f1 = f1_score(y_true, y_pred, average="macro", zero_division=0)
     micro_f1 = f1_score(y_true, y_pred, average="micro", zero_division=0)
     map_mean, map_sd = map_mean_sd(y_true, y_prob)
@@ -158,7 +166,7 @@ for level_name, (label_sl, _) in LEVELS.items():
     level_model = NPClassifierLightning.load_from_checkpoint(ckpt_path)
     level_model.eval()
 
-    raw   = pred_trainer.predict(level_model, test_loader)
+    raw = pred_trainer.predict(level_model, test_loader)
     probs = torch.cat(raw, dim=0).numpy()
     preds = (probs >= THRESHOLD).astype(np.int32)
 

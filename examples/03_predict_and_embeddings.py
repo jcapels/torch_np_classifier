@@ -34,16 +34,16 @@ args = parser.parse_args()
 # ---------------------------------------------------------------------------
 smiles_list = [
     "Cn1cnc2c1c(=O)n(c(=O)n2C)C",  # caffeine
-    "CC(=O)Oc1ccccc1C(=O)O",        # aspirin
+    "CC(=O)Oc1ccccc1C(=O)O",  # aspirin
     "c1ccc2c(c1)cc1ccc3cccc4ccc2c1c34",  # pyrene
 ]
 
 featurizer = NPClassifierFeaturizer(radius=2)
-features = featurizer.transform(smiles_list)   # (N, 6144)
+features = featurizer.transform(smiles_list)  # (N, 6144)
 
 # No labels needed for prediction
 dataset = NPClassifierDataset(features)
-loader  = DataLoader(dataset, batch_size=32, shuffle=False)
+loader = DataLoader(dataset, batch_size=32, shuffle=False)
 
 # ---------------------------------------------------------------------------
 # Load model & predict
@@ -51,16 +51,16 @@ loader  = DataLoader(dataset, batch_size=32, shuffle=False)
 model = NPClassifierLightning.load_from_checkpoint(args.ckpt)
 
 collector = EmbeddingCollector()
-trainer   = lightning.Trainer(callbacks=[collector], devices=1)
+trainer = lightning.Trainer(callbacks=[collector], devices=1)
 trainer.predict(model, loader)
 
-predictions: np.ndarray = collector.predictions   # (N, num_categories)
-embeddings:  np.ndarray = collector.embeddings    # (N, 1536)
+predictions: np.ndarray = collector.predictions  # (N, num_categories)
+embeddings: np.ndarray = collector.embeddings  # (N, 1536)
 
 print("predictions shape:", predictions.shape)
 print("embeddings  shape:", embeddings.shape)
 
 # Save to disk
 np.save("predictions.npy", predictions)
-np.save("embeddings.npy",  embeddings)
+np.save("embeddings.npy", embeddings)
 print("Saved predictions.npy and embeddings.npy")

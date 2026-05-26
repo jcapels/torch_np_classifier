@@ -28,13 +28,13 @@ from torch_np_classifier import (
 # ---------------------------------------------------------------------------
 # Config — adjust these to match your data
 # ---------------------------------------------------------------------------
-TRAIN_CSV     = "merged_dataset.csv"
-SMILES_COL     = "SMILES"
+TRAIN_CSV = "merged_dataset.csv"
+SMILES_COL = "SMILES"
 NUM_CATEGORIES = 730
-BATCH_SIZE    = 128
-MAX_EPOCHS    = 50
-LR            = 1e-5
-CKPT_PATH     = "np_classifier.ckpt"
+BATCH_SIZE = 128
+MAX_EPOCHS = 50
+LR = 1e-5
+CKPT_PATH = "np_classifier.ckpt"
 
 # ---------------------------------------------------------------------------
 # 1. Load CSV & featurize
@@ -43,21 +43,21 @@ print("Loading data …")
 df = pd.read_csv(TRAIN_CSV)
 
 smiles_list = df[SMILES_COL].tolist()
-label_cols  = df.select_dtypes(include=[np.number]).columns.tolist()
-labels      = df[label_cols].values.astype(np.float32)
+label_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+labels = df[label_cols].values.astype(np.float32)
 
 print(f"  molecules : {len(smiles_list)}")
 print(f"  categories: {labels.shape[1]}")
 
 print("Featurizing SMILES …")
 featurizer = NPClassifierFeaturizer(radius=2, n_jobs=-1)
-features   = featurizer.transform(smiles_list)   # (N, 6144)
+features = featurizer.transform(smiles_list)  # (N, 6144)
 print(f"  feature matrix: {features.shape}")
 
 # ---------------------------------------------------------------------------
 # 2. Dataset & DataLoader (no validation split)
 # ---------------------------------------------------------------------------
-dataset      = NPClassifierDataset(features, labels)
+dataset = NPClassifierDataset(features, labels)
 train_loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
 
 # ---------------------------------------------------------------------------
@@ -76,7 +76,7 @@ trainer = lightning.Trainer(
     enable_progress_bar=True,
     devices=1,
 )
-trainer.fit(model, train_loader)   # no val_loader → no validation loop
+trainer.fit(model, train_loader)  # no val_loader → no validation loop
 
 # ---------------------------------------------------------------------------
 # 4. Save checkpoint
@@ -97,32 +97,34 @@ print("  hparams:", dict(loaded_model.hparams))
 # ---------------------------------------------------------------------------
 print("\nPredicting …")
 predict_smiles = [
-    "Cn1cnc2c1c(=O)n(c(=O)n2C)C",   # caffeine
-    "O=C(O)/C=C/c1ccccc1",           # cinnamic acid
+    "Cn1cnc2c1c(=O)n(c(=O)n2C)C",  # caffeine
+    "O=C(O)/C=C/c1ccccc1",  # cinnamic acid
 ]
 predict_features = featurizer.transform(predict_smiles)
-predict_ds       = NPClassifierDataset(predict_features)   # no labels needed
-predict_loader   = DataLoader(predict_ds, batch_size=32, num_workers=0)
+predict_ds = NPClassifierDataset(predict_features)  # no labels needed
+predict_loader = DataLoader(predict_ds, batch_size=32, num_workers=0)
 
 predict_trainer = lightning.Trainer(enable_progress_bar=False)
-raw_outputs     = predict_trainer.predict(loaded_model, predict_loader)
+raw_outputs = predict_trainer.predict(loaded_model, predict_loader)
 
-predictions = torch.cat(raw_outputs, dim=0).numpy()   # (N, NUM_CATEGORIES)
+predictions = torch.cat(raw_outputs, dim=0).numpy()  # (N, NUM_CATEGORIES)
 print(f"Prediction shape: {predictions.shape}")
 
 for smi, prob in zip(predict_smiles, predictions):
     top = np.argsort(prob)[::-1][:5]
-    print(f"  {smi[:45]:<45}  top-5 classes: {top.tolist()}  probs: {prob[top].round(3).tolist()}")
+    print(
+        f"  {smi[:45]:<45}  top-5 classes: {top.tolist()}  probs: {prob[top].round(3).tolist()}"
+    )
 
 # ---------------------------------------------------------------------------
 # 7. Predict with embeddings
 # ---------------------------------------------------------------------------
 print("\nCollecting embeddings …")
-collector     = EmbeddingCollector()
+collector = EmbeddingCollector()
 embed_trainer = lightning.Trainer(callbacks=[collector], enable_progress_bar=False)
 embed_trainer.predict(loaded_model, predict_loader)
 
-embeddings   = collector.embeddings    # (N, 1536)
-predictions2 = collector.predictions   # (N, NUM_CATEGORIES)
+embeddings = collector.embeddings  # (N, 1536)
+predictions2 = collector.predictions  # (N, NUM_CATEGORIES)
 print(f"  embeddings  shape: {embeddings.shape}")
 print(f"  predictions shape: {predictions2.shape}")

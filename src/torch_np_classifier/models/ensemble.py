@@ -20,11 +20,15 @@ Typical workflow
 
 from __future__ import annotations
 
+import hashlib
+import io
 import itertools
 import json
 import logging
 import pickle
+import urllib.request
 import warnings
+import zipfile
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Union
 
@@ -41,6 +45,17 @@ _DATA_DIR = Path(__file__).parent.parent / "data"
 _ONTOLOGY_PATH = _DATA_DIR / "index_v1.json"
 _LABEL_PKL = _DATA_DIR / "label_names.pkl"
 
+# ── pretrained model download ────────────────────────────────────────────────
+_PRETRAINED_URL = (
+    "https://zenodo.org/records/20398261/files/np_classifier_models.zip?download=1"
+)
+_PRETRAINED_CACHE_DIR = Path.home() / ".cache" / "torch_np_classifier"
+_PRETRAINED_CKPTS = {
+    "pathway": "pathway_np_classifier.ckpt",
+    "superclass": "superclass_np_classifier.ckpt",
+    "class": "class_np_classifier.ckpt",
+}
+
 # Label layout within the 730-dim label vector
 _N_PATHWAY = 7
 _N_SUPERCLASS = 70  # indices  7:77
@@ -53,12 +68,61 @@ _DEFAULT_ALIASES: Dict[str, str] = {
 }
 
 # Glycoside SMARTS — O-glycosides only ([*] narrowed to O to exclude C/N-glycosides)
-_HEXA_PYRANOSE  = "[O]C1C([O])C([O])C(C[O])OC1O"   # hexose pyranose (has CH2OH at C5)
-_HEXA_DEOXY     = "CC1OC([O])C([O])C([O])C1[O]"     # 6-deoxy pyranose (CH3 at C5: rhamnose, fucose, digitoxose)
-_PENTA_FURANOSE = "[O]CC1OC([O])C([O])C1[O]"         # furanose O-glycoside
+_HEXA_PYRANOSE = "[O]C1C([O])C([O])C(C[O])OC1O"  # hexose pyranose (has CH2OH at C5)
+_HEXA_DEOXY = "CC1OC([O])C([O])C([O])C1[O]"  # 6-deoxy pyranose (CH3 at C5: rhamnose, fucose, digitoxose)
+_PENTA_FURANOSE = "[O]CC1OC([O])C([O])C1[O]"  # furanose O-glycoside
 
 
 # ── helpers ─────────────────────────────────────────────────────────────────
+
+
+def _download_and_extract(url: str, dest_dir: Path, filenames: set) -> None:
+    """Stream-download *url* and extract *filenames* from the zip into *dest_dir*."""
+    logger = logging.getLogger(__name__)
+    try:
+        from tqdm import tqdm
+
+        _has_tqdm = True
+    except ImportError:
+        _has_tqdm = False
+
+    with urllib.request.urlopen(url) as response:
+        total = int(response.headers.get("Content-Length", 0))
+        chunk_size = 1 << 20  # 1 MB
+
+        buf = io.BytesIO()
+        downloaded = 0
+
+        if _has_tqdm:
+            pbar = tqdm(
+                total=total or None,
+                unit="B",
+                unit_scale=True,
+                desc="Downloading NP-Classifier models",
+            )
+        else:
+            logger.info("Downloading … (no tqdm, no progress bar)")
+
+        while True:
+            chunk = response.read(chunk_size)
+            if not chunk:
+                break
+            buf.write(chunk)
+            downloaded += len(chunk)
+            if _has_tqdm:
+                pbar.update(len(chunk))
+
+        if _has_tqdm:
+            pbar.close()
+
+    buf.seek(0)
+    with zipfile.ZipFile(buf) as zf:
+        for member in zf.infolist():
+            name = Path(member.filename).name
+            if name in filenames:
+                logger.info("Extracting %s …", name)
+                member.filename = name  # strip directory prefix
+                zf.extract(member, dest_dir)
 
 
 def _load_ontology(source: Union[str, Path, dict, None]) -> dict:
@@ -77,7 +141,7 @@ def _is_glycoside(mol) -> bool:
     try:
         from rdkit import Chem
 
-        hexa  = Chem.MolFromSmarts(_HEXA_PYRANOSE)
+        hexa = Chem.MolFromSmarts(_HEXA_PYRANOSE)
         deoxy = Chem.MolFromSmarts(_HEXA_DEOXY)
         penta = Chem.MolFromSmarts(_PENTA_FURANOSE)
         return (
@@ -283,6 +347,50 @@ class NPClassifierEnsemble:
             **kwargs,
         )
 
+    @classmethod
+    def from_pretrained(
+        cls,
+        cache_dir: Union[str, Path, None] = None,
+        force_download: bool = False,
+        **kwargs,
+    ) -> "NPClassifierEnsemble":
+        """Load the ensemble from the bundled pretrained Zenodo checkpoints.
+
+        On first call the three checkpoint files (~300 MB each) are downloaded
+        from Zenodo and cached under ``~/.cache/torch_np_classifier/`` (or
+        *cache_dir* if given).  Subsequent calls reuse the cached files.
+
+        Parameters
+        ----------
+        cache_dir:
+            Directory where the downloaded checkpoints are stored.  Defaults to
+            ``~/.cache/torch_np_classifier/``.
+        force_download:
+            Re-download even if cached checkpoints already exist.
+        **kwargs:
+            Forwarded to :class:`NPClassifierEnsemble`.
+        """
+        cache = Path(cache_dir) if cache_dir is not None else _PRETRAINED_CACHE_DIR
+        cache.mkdir(parents=True, exist_ok=True)
+
+        ckpt_paths = {k: cache / v for k, v in _PRETRAINED_CKPTS.items()}
+        missing = [p for p in ckpt_paths.values() if not p.exists()]
+
+        if missing or force_download:
+            logging.getLogger(__name__).info(
+                "Downloading pretrained NP-Classifier models from Zenodo …"
+            )
+            _download_and_extract(
+                _PRETRAINED_URL, cache, set(_PRETRAINED_CKPTS.values())
+            )
+
+        return cls.from_checkpoints(
+            pathway_ckpt=ckpt_paths["pathway"],
+            superclass_ckpt=ckpt_paths["superclass"],
+            class_ckpt=ckpt_paths["class"],
+            **kwargs,
+        )
+
     # ── hierarchy building ──────────────────────────────────────────────────
 
     def _resolve_name(self, name: str, aliases: Dict[str, str]) -> str:
@@ -456,7 +564,14 @@ class NPClassifierEnsemble:
             n_super = list(np.where(super_probs[i] >= self.superclass_threshold)[0])
             n_class = list(np.where(class_probs[i] >= self.class_threshold)[0])
 
-            voted = self._vote(n_path, n_super, n_class, super_probs[i], class_probs[i], glycoside_flags[i])
+            voted = self._vote(
+                n_path,
+                n_super,
+                n_class,
+                super_probs[i],
+                class_probs[i],
+                glycoside_flags[i],
+            )
             results.append(voted)
 
         return results

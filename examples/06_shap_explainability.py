@@ -19,6 +19,7 @@ import pandas as pd
 import torch
 import lightning
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
@@ -37,11 +38,13 @@ from torch_np_classifier import (
 parser = argparse.ArgumentParser(description="SHAP explainability for NP Classifier")
 parser.add_argument("--ckpt", required=True, help="Path to .ckpt checkpoint")
 parser.add_argument(
-    "--background-csv", default=None,
+    "--background-csv",
+    default=None,
     help="CSV with SMILES column to build SHAP background (recommended)",
 )
 parser.add_argument(
-    "--smiles-col", default="SMILES",
+    "--smiles-col",
+    default="SMILES",
     help="Name of the SMILES column in the background CSV",
 )
 parser.add_argument("--n-background", type=int, default=100)
@@ -53,10 +56,10 @@ args = parser.parse_args()
 # Test molecules — well-known natural products
 # ---------------------------------------------------------------------------
 MOLECULES = {
-    "caffeine":  "Cn1cnc2c1c(=O)n(c(=O)n2C)C",
+    "caffeine": "Cn1cnc2c1c(=O)n(c(=O)n2C)C",
     "quercetin": "O=c1c(O)c(-c2ccc(O)c(O)c2)oc2cc(O)cc(O)c12",
-    "morphine":  "CN1CC[C@]23c4c5ccc(O)c4O[C@H]2[C@@H](O)C=C[C@@H]3[C@@H]1C5",
-    "aspirin":   "CC(=O)Oc1ccccc1C(=O)O",
+    "morphine": "CN1CC[C@]23c4c5ccc(O)c4O[C@H]2[C@@H](O)C=C[C@@H]3[C@@H]1C5",
+    "aspirin": "CC(=O)Oc1ccccc1C(=O)O",
     "cholesterol": "[C@@H]1(CC[C@@H]2[C@@]1(CC[C@H]3[C@H]2CC=C4[C@@]3(CC[C@@H](C4)O)C)[C@H](CCCC(C)C)C)C",
 }
 
@@ -66,8 +69,8 @@ MOLECULES = {
 print("Featurizing …")
 featurizer = NPClassifierFeaturizer(radius=2, n_jobs=-1)
 smiles_list = list(MOLECULES.values())
-names_list  = list(MOLECULES.keys())
-features    = featurizer.transform(smiles_list)
+names_list = list(MOLECULES.keys())
+features = featurizer.transform(smiles_list)
 
 # ---------------------------------------------------------------------------
 # 2. Load model & predict
@@ -77,10 +80,10 @@ model = NPClassifierLightning.load_from_checkpoint(args.ckpt)
 model.eval()
 
 dataset = NPClassifierDataset(features)
-loader  = DataLoader(dataset, batch_size=32, shuffle=False, num_workers=0)
+loader = DataLoader(dataset, batch_size=32, shuffle=False, num_workers=0)
 trainer = lightning.Trainer(enable_progress_bar=False, logger=False)
-raw     = trainer.predict(model, loader)
-probs   = torch.cat(raw, dim=0).numpy()  # (N, num_categories)
+raw = trainer.predict(model, loader)
+probs = torch.cat(raw, dim=0).numpy()  # (N, num_categories)
 
 # ---------------------------------------------------------------------------
 # 3. Decode predictions (requires label names from the CSV)
@@ -110,7 +113,9 @@ else:
 # 4. Build SHAP background fingerprints
 # ---------------------------------------------------------------------------
 if args.background_csv:
-    print(f"\nSampling {args.n_background} background molecules from {args.background_csv} …")
+    print(
+        f"\nSampling {args.n_background} background molecules from {args.background_csv} …"
+    )
     df_bg = pd.read_csv(args.background_csv)
     bg_smiles_all = df_bg[args.smiles_col].dropna().tolist()
     rng = np.random.default_rng(42)
@@ -123,9 +128,9 @@ if args.background_csv:
 else:
     print("\nNo --background-csv provided — using random background (less accurate).")
     rng = np.random.default_rng(42)
-    bg_features = rng.random(
-        (args.n_background, featurizer.feature_dim)
-    ).astype(np.float32)
+    bg_features = rng.random((args.n_background, featurizer.feature_dim)).astype(
+        np.float32
+    )
 
 # ---------------------------------------------------------------------------
 # 5. SHAP explanation per molecule
@@ -144,16 +149,19 @@ for mol_name, smi, prob in zip(names_list, smiles_list, probs):
     )
 
     explainer = NPClassifierSHAP(model, bg_features, class_indices=[top_class])
-    sv        = explainer.explain_smiles(smi, featurizer)  # (1, 6144, 1)
-    sv_1d     = sv[0, :, 0]
+    sv = explainer.explain_smiles(smi, featurizer)  # (1, 6144, 1)
+    sv_1d = sv[0, :, 0]
 
     n_top = len(explainer.top_feature_indices(sv_1d, k=args.k))
     print(f"  {n_top} active positive SHAP bits in top-{args.k}")
 
     # Full explanation figure (molecule + bar chart + fragments)
     fig = explainer.explanation_figure(
-        smi, sv_1d, featurizer,
-        class_name=class_label, k=args.k,
+        smi,
+        sv_1d,
+        featurizer,
+        class_name=class_label,
+        k=args.k,
     )
     out_full = os.path.join(args.outdir, f"explanation_{mol_name}.png")
     fig.savefig(out_full, dpi=150, bbox_inches="tight")
@@ -161,9 +169,7 @@ for mol_name, smi, prob in zip(names_list, smiles_list, probs):
     print(f"  Saved {out_full}")
 
     # Fragment-only grid
-    fig_frags = explainer.draw_bit_fragments(
-        smi, sv_1d, featurizer, k=args.k
-    )
+    fig_frags = explainer.draw_bit_fragments(smi, sv_1d, featurizer, k=args.k)
     out_frags = os.path.join(args.outdir, f"bits_{mol_name}.png")
     fig_frags.savefig(out_frags, dpi=150, bbox_inches="tight")
     plt.close(fig_frags)

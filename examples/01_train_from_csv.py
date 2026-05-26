@@ -23,7 +23,7 @@ dm = NPClassifierDataModule(
     train_csv="data/train.csv",
     val_csv="data/val.csv",
     smiles_col="SMILES",
-    label_slice=slice(1, None),   # all columns after SMILES are labels
+    label_slice=slice(1, None),  # all columns after SMILES are labels
     batch_size=128,
     num_workers=4,
 )

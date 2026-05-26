@@ -314,7 +314,9 @@ class NPClassifierFeaturizer:
 
         results = Parallel(n_jobs=self.n_jobs)(
             delayed(featurize_smiles)(smi, self.radius, self.use_chirality)
-            for smi in tqdm(smiles_list, total=len(smiles_list), desc="Featurizing SMILES")
+            for smi in tqdm(
+                smiles_list, total=len(smiles_list), desc="Featurizing SMILES"
+            )
         )
 
         out = np.zeros((len(smiles_list), self.feature_dim), dtype=np.float32)
@@ -341,7 +343,9 @@ class NPClassifierFeaturizer:
 
         results = Parallel(n_jobs=self.n_jobs)(
             delayed(_featurize_smiles_with_mol)(smi, self.radius, self.use_chirality)
-            for smi in tqdm(smiles_list, total=len(smiles_list), desc="Featurizing SMILES")
+            for smi in tqdm(
+                smiles_list, total=len(smiles_list), desc="Featurizing SMILES"
+            )
         )
 
         out = np.zeros((len(smiles_list), self.feature_dim), dtype=np.float32)

@@ -138,7 +138,9 @@ class NPClassifierPipeline:
         # Get half of available cores
         n_cores = os.cpu_count() // 2
         self.featurizer = (
-            featurizer if featurizer is not None else NPClassifierFeaturizer(n_jobs=n_cores)
+            featurizer
+            if featurizer is not None
+            else NPClassifierFeaturizer(n_jobs=n_cores)
         )
 
         self._ensemble: Optional[NPClassifierEnsemble] = None
