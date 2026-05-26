@@ -43,7 +43,7 @@ LABEL_START = 2   # CSV columns to skip: 'key' and 'SMILES'
 
 BATCH_SIZE  = 128
 MAX_EPOCHS  = 50
-MAX_EPOCHS = {"pathway": 50, "superclass": 50, "class": 50}
+MAX_EPOCHS = {"pathway": 6, "superclass": 20, "class": 40}
 LR          = 1e-5
 CKPT_DIR    = "checkpoints/hierarchical_lifecycle/"
 
