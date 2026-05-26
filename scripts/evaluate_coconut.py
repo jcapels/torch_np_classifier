@@ -11,10 +11,10 @@ Usage
 
 Metrics reported (per level)
 -----------------------------
-- hit_rate    : fraction of molecules where the true label appears in the
-                predicted set (multi-label recall at k).
+- hit_rate    : fraction of molecules (with GT) where the true label appears
+                in the predicted set (multi-label recall at k).
 - precision   : mean fraction of predicted labels that are correct.
-- empty_rate  : fraction of molecules where the model predicted nothing.
+- empty_rate  : fraction of molecules (with GT) where the model predicted nothing.
 - glycoside_acc: boolean accuracy for the is_glycoside flag.
 """
 
@@ -119,30 +119,25 @@ df["pred_glycoside"] = pred_glycoside
 def evaluate_level(gt_series: pd.Series, pred_series: pd.Series, level: str):
     """Compare single-label ground truth against multi-label predictions.
 
-    Rows where GT is NaN are treated as "no prediction" from the ground truth.
-    A molecule where GT is NaN and the model also predicts nothing counts as a
-    correct hit; a model prediction when GT is NaN is counted as a false positive.
+    Rows where GT is NaN are excluded from all metrics.
     """
     import numpy as np
 
+    mask = gt_series.notna()
+    gt_series = gt_series[mask]
+    pred_series = pred_series[mask]
+
     total = len(gt_series)
+    no_gt = int(mask.size - mask.sum())
     if total == 0:
-        print(f"\n[{level}] No data — skipped.")
+        print(f"\n[{level}] No data with ground truth — skipped.")
         return {}
 
     hits = 0
     precisions = []
     for gt_val, pred_val in zip(gt_series, pred_series):
-        gt_empty = pd.isna(gt_val)
         pred_empty = not pred_val
-
-        if gt_empty and pred_empty:
-            hits += 1  # correctly predicted no label
-            precisions.append(1.0)
-        elif gt_empty and not pred_empty:
-            # false-positive predictions when GT has no label
-            precisions.append(0.0)
-        elif not gt_empty and pred_empty:
+        if pred_empty:
             # missed prediction — precision undefined for empty set
             precisions.append(float("nan"))
         else:
@@ -154,7 +149,7 @@ def evaluate_level(gt_series: pd.Series, pred_series: pd.Series, level: str):
     mean_precision = float(np.mean(prec_arr)) if prec_arr else float("nan")
 
     empty = sum(not p for p in pred_series)
-    no_gt = int(gt_series.isna().sum())
+    no_gt = no_gt
 
     metrics = {
         "level": level,
