@@ -20,7 +20,6 @@ Typical workflow
 
 from __future__ import annotations
 
-import hashlib
 import io
 import itertools
 import json

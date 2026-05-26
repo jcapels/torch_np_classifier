@@ -310,7 +310,6 @@ class NPClassifierFeaturizer:
         float32.
         """
         from tqdm import tqdm
-        from joblib import Parallel, delayed
 
         results = Parallel(n_jobs=self.n_jobs)(
             delayed(featurize_smiles)(smi, self.radius, self.use_chirality)
@@ -339,7 +338,6 @@ class NPClassifierFeaturizer:
         mols is a list of length N with ``None`` for any unparseable SMILES.
         """
         from tqdm import tqdm
-        from joblib import Parallel, delayed
 
         results = Parallel(n_jobs=self.n_jobs)(
             delayed(_featurize_smiles_with_mol)(smi, self.radius, self.use_chirality)

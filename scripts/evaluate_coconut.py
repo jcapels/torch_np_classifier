@@ -22,7 +22,6 @@ import argparse
 import time
 import tracemalloc
 import warnings
-from pathlib import Path
 
 import pandas as pd
 
