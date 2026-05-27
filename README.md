@@ -14,6 +14,8 @@ The library ships pretrained models and provides a single high-level object, `NP
 - [Molecular embeddings](#molecular-embeddings)
 - [Explainability](#explainability)
 - [Training your own model](#training-your-own-model)
+- [Benchmark on CocoNut](#benchmark-on-coconut)
+- [Acknowledgements](#acknowledgements)
 
 ---
 
@@ -306,3 +308,29 @@ trainer.fit(model, datamodule=dm)
 ```
 
 See the [`examples/`](examples/) directory and [`notebooks/`](notebooks/) for complete end-to-end walkthroughs including hierarchical training, ensemble construction, and evaluation.
+
+---
+
+## Benchmark on CocoNut
+
+The pretrained models were evaluated on the [CocoNut](https://coconut.naturalproducts.net/) database of natural products. Molecules without a ground-truth label for a given level are counted as correct when the model also predicts nothing (`no_gt` column).
+
+| Level | n | no\_gt | Hit rate | Mean precision | Empty rate |
+|---|---|---|---|---|---|
+| pathway | 686,556 | 52,271 | **0.9287** (637,612 / 686,556) | 0.9517 | 0.0242 (16,595 molecules) |
+| superclass | 588,670 | 150,157 | **0.8442** (496,959 / 588,670) | 0.9301 | 0.0923 (54,357 molecules) |
+| class | 556,164 | 182,663 | **0.8238** (458,168 / 556,164) | 0.8890 | 0.0733 (40,762 molecules) |
+| is\_glycoside | 738,728 | — | **0.9533** accuracy (704,217 / 738,728) | — | — |
+
+- **Hit rate** — fraction of molecules where the true label appears in the predicted set (or both are empty).
+- **Mean precision** — average fraction of predicted labels that are correct.
+- **Empty rate** — fraction of molecules for which the model produced no prediction.
+
+---
+
+## Acknowledgements
+
+This library is inspired by and builds upon:
+
+- **NP-Classifier publication**: Kim, H. W. *et al.* "NPClassifier: A Deep Neural Network-Based Structural Classification Tool for Natural Products." *J. Nat. Prod.* **2021**, 84, 2795–2807. [https://doi.org/10.1021/acs.jnatprod.1c00399](https://doi.org/10.1021/acs.jnatprod.1c00399)
+- **NP-Classifier repository** (original Keras model and training data): [https://github.com/mwang87/NP-Classifier](https://github.com/mwang87/NP-Classifier) — the architecture, label hierarchy, and dataset used in this reimplementation were derived from that repository.
