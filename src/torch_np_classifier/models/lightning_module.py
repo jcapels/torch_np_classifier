@@ -53,7 +53,7 @@ class NPClassifierLightning(lightning.LightningModule):
         num_categories: int = 730,
         lr: float = 1e-5,
         scheduler: bool = False,
-        original: bool = False,
+        original: bool = True,
     ) -> None:
         super().__init__()
         self.save_hyperparameters()

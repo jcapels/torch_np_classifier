@@ -120,7 +120,7 @@ class NPClassifierPipeline:
         self,
         lr: float = 1e-5,
         scheduler: bool = True,
-        original: bool = False,
+        original: bool = True,
         max_epochs: int = 150,
         batch_size: int = 128,
         num_workers: int = 4,

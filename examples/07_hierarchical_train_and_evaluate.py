@@ -104,7 +104,7 @@ for level_name, (label_sl, num_cats_hint) in LEVELS.items():
         num_workers=4,
     )
 
-    model = NPClassifierLightning(num_categories=num_cats, lr=LR, scheduler=True)
+    model = NPClassifierLightning(num_categories=num_cats, lr=LR, scheduler=True, original=True)
 
     ckpt_dir = os.path.join(CKPT_DIR, level_name)
     ckpt_cb = ModelCheckpoint(

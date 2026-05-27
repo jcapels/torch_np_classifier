@@ -43,7 +43,7 @@ LABEL_START = 2  # CSV columns to skip: 'key' and 'SMILES'
 
 BATCH_SIZE = 128
 MAX_EPOCHS = 50
-MAX_EPOCHS = {"pathway": 6, "superclass": 20, "class": 40}
+MAX_EPOCHS = {"pathway": 13, "superclass": 28, "class": 35}
 LR = 1e-5
 CKPT_DIR = "checkpoints/hierarchical_lifecycle/"
 
@@ -99,7 +99,7 @@ for level_name, label_sl in LEVELS.items():
         num_workers=4,
     )
 
-    model = NPClassifierLightning(num_categories=num_cats, lr=LR, scheduler=False)
+    model = NPClassifierLightning(num_categories=num_cats, lr=LR, scheduler=False, original=True)
 
     trainer = lightning.Trainer(
         max_epochs=MAX_EPOCHS[level_name],

@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 
 class NPClassifierDNN(nn.Module):
-    def __init__(self, num_categories=730, original=False):
+    def __init__(self, num_categories=730, original=True):
         super(NPClassifierDNN, self).__init__()
         self.original = original
         if not self.original:
@@ -23,7 +23,8 @@ class NPClassifierDNN(nn.Module):
             self.dense2 = nn.Linear(3072, 2304)
             self.bn2 = nn.BatchNorm1d(2304)
             self.dense3 = nn.Linear(2304, 1152)
-            self.dropout = nn.Dropout(0.1)
+            self.bn3 = nn.BatchNorm1d(1152)
+            self.dropout = nn.Dropout(0.2)
             self.output = nn.Linear(1152, num_categories)
 
     def forward(self, x, return_embedding=False):
@@ -45,6 +46,7 @@ class NPClassifierDNN(nn.Module):
             x = F.relu(self.dense2(x))
             x = self.bn2(x)
             x = F.relu(self.dense3(x))
+            x = self.bn3(x)
             embedding = torch.clone(x)
             x = self.dropout(x)
             x = self.output(x)
