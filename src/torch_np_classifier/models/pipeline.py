@@ -20,8 +20,8 @@ Typical workflow
 ...     class_ckpt="class.ckpt",
 ... )
 >>>
->>> # Or load the bundled pretrained models (downloaded on first call)
->>> pipeline = NPClassifierPipeline.from_pretrained()
+>>> # Use pretrained models (downloaded automatically on first prediction)
+>>> pipeline = NPClassifierPipeline()
 >>>
 >>> # Full voted prediction
 >>> result = pipeline.predict("Cn1cnc2c1c(=O)n(c(=O)n2C)C")
@@ -442,7 +442,14 @@ class NPClassifierPipeline:
 
     def _check_fitted(self) -> None:
         if self._ensemble is None:
-            raise RuntimeError("Pipeline is not fitted yet. Call fit() or use NPClassifierPipeline.from_checkpoints().")
+            self._ensemble = NPClassifierEnsemble.from_pretrained(
+                pathway_threshold=self.pathway_threshold,
+                superclass_threshold=self.superclass_threshold,
+                class_threshold=self.class_threshold,
+                featurizer=self.featurizer,
+            )
+            with open(_LABEL_PKL, "rb") as f:
+                self._label_names = pickle.load(f)
 
     def predict(
         self,

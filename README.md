@@ -46,8 +46,8 @@ pip install shap matplotlib Pillow
 ```python
 from torch_np_classifier import NPClassifierPipeline
 
-# Downloads pretrained checkpoints on first call (~300 MB), cached afterwards
-pipeline = NPClassifierPipeline.from_pretrained()
+# Pretrained checkpoints are downloaded automatically on first prediction (~300 MB), cached afterwards
+pipeline = NPClassifierPipeline()
 
 result = pipeline.predict("O=c1c(O)c(-c2ccc(O)c(O)c2)oc2cc(O)cc(O)c12")  # quercetin
 print(result["pathway"])     # ['Shikimates and Phenylpropanoids']
@@ -65,7 +65,7 @@ print(result["isglycoside"]) # False
 ```python
 from torch_np_classifier import NPClassifierPipeline
 
-pipeline = NPClassifierPipeline.from_pretrained()
+pipeline = NPClassifierPipeline()
 
 result = pipeline.predict("Cn1cnc2c1c(=O)n(c(=O)n2C)C")  # caffeine
 print(result)
