@@ -1,13 +1,14 @@
 name: Publish to PyPI
 
 on:
-  push:
-    tags:
-      - "v*.*.*"
+  workflow_run:
+    workflows: ["Release"]
+    types: [completed]
 
 jobs:
   publish:
     name: Publish to PyPI
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     environment:
       name: pypi
@@ -17,16 +18,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          ref: ${{ github.event.workflow_run.head_sha }}
 
-      - name: Install build tools
-        run: pip install build
-
-      - name: Build wheel and sdist
-        run: python -m build
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
