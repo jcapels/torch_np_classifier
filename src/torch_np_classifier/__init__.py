@@ -1,3 +1,10 @@
+from importlib.metadata import version, PackageNotFoundError
+
+try:
+    __version__ = version("torch-np-classifier")
+except PackageNotFoundError:
+    __version__ = "unknown"
+
 from torch_np_classifier.models.np_classifier import NPClassifierDNN
 from torch_np_classifier.models.lightning_module import NPClassifierLightning
 from torch_np_classifier.models.ensemble import NPClassifierEnsemble
