@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 setup(
     name="torch_np_classifier",
     version="0.0.2",
-    description="PyTorch/Lightning reimplementation of NP-Classifier for biosynthetic classification of natural products.",
+    description="PyTorch/Lightning reimplementation of NP-Classifier.",
     long_description=Path("README.md").read_text(encoding="utf-8"),
     long_description_content_type="text/markdown",
     package_dir={"": "src"},
