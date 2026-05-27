@@ -65,7 +65,7 @@ class TestPredictStep:
         assert "predictions" in out
         assert "embeddings" in out
         assert out["predictions"].shape == (BATCH_SIZE, NUM_CATEGORIES)
-        assert out["embeddings"].shape == (BATCH_SIZE, 1536)
+        assert out["embeddings"].shape == (BATCH_SIZE, 1152)
         module.return_embedding = False
 
     def test_predict_step_with_embedding_original(self, module_original, batch):
