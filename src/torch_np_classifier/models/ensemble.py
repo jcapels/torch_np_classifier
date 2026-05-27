@@ -45,7 +45,7 @@ _ONTOLOGY_PATH = _DATA_DIR / "index_v1.json"
 _LABEL_PKL = _DATA_DIR / "label_names.pkl"
 
 # ── pretrained model download ────────────────────────────────────────────────
-_PRETRAINED_URL = "https://zenodo.org/records/20411707/files/np_classifier_models.zip?download=1"
+_PRETRAINED_URL = "https://zenodo.org/records/20415267/files/np_classifier_models.zip?download=1"
 _PRETRAINED_CACHE_DIR = Path.home() / ".cache" / "torch_np_classifier"
 _PRETRAINED_CKPTS = {
     "pathway": "pathway_np_classifier.ckpt",
