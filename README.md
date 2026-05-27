@@ -4,6 +4,8 @@ A PyTorch/Lightning implementation of the [NP-Classifier](https://pubs.acs.org/d
 
 The library ships pretrained models and provides a single high-level object, `NPClassifierPipeline`, for prediction, embedding extraction, and SHAP-based explainability.
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1OMzGPIzvvvpuEXyqzD9xJifA_6EYtMlY?usp=sharing)
+
 ---
 
 ## Table of contents
