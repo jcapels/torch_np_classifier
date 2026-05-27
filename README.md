@@ -160,7 +160,7 @@ plt.tight_layout()
 plt.show()
 ```
 
-![UMAP of pathway-model embeddings coloured by pathway](images/umap.png)
+![UMAP of pathway-model embeddings coloured by pathway](https://raw.githubusercontent.com/jcapels/torch_np_classifier/main/images/umap.png)
 
 ---
 
@@ -193,7 +193,7 @@ fig = pipeline.explain(
 )
 ```
 
-![SHAP explanation for aspirin](images/aspirin_explain.png)
+![SHAP explanation for aspirin](https://raw.githubusercontent.com/jcapels/torch_np_classifier/main/images/aspirin_explain.png)
 
 ### Single-level explanation
 
